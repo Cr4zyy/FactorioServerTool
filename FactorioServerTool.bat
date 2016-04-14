@@ -1,5 +1,5 @@
 @echo off 
-:: Factorio Server Tool v1.1
+:: Factorio Server Tool v1.11
 :: 13/Apr/2016
 :: www.cr4zyb4st4rd.co.uk
 
@@ -140,9 +140,9 @@ del en?er.bat > nul
 call :GEOLE %FastStart% 0 1
 IF %GEOLEvalue%== 1 echo FastStart = OK
 IF %GEOLEvalue%== 0 set failed=This error is so show that the tool has tried to fix the problem, please re-launch the tool and if this continues please delete %FactorioServerConfig%&& call :errorFix FastStart 0
+echo.
 
-
-IF NOT EXIST %ServerConfig% set failed=Could not locate config-server.ini but this batch script has loaded config file, you might need to delete it: %FactorioServerConfig% && goto errorEnd
+IF NOT EXIST %ServerConfig% set failed=Could not locate config-server.ini but found the FactorioServerConfig.ini trying to repair please try again and if it fails delete: %FactorioServerConfig% && call :errorFix SetupComplete 0
 
 IF %FastStart%== 1 goto latestSave
 
@@ -323,35 +323,40 @@ echo  Mods and Save files
 echo -------------------------------------------------------------------------------
 
 set /p ans3=Copy your Single Player mods folder? [Y/N]
-IF %ans3%== y set SPMods=1
-IF %ans3%== n set SPMods=0
+IF %ans3%== y set SPMods=1&& goto spFolder
+IF %ans3%== n set SPMods=0&& goto spFolder
 IF NOT %ans3%== y echo Incorrect answer&& goto createServerDir
 IF NOT %ans3%== n echo Incorrect answer&& goto createServerDir
 
-echo.
+
 :spFolder
+echo.
+echo.
 echo Copy your Single Player saves folder? 
 echo Selecting No will still allow you to create a new save
 set /p ans4=[Y/N]?
-IF %ans4%== y set SPSaves=1
-IF %ans4%== n set SPSaves=0
+IF %ans4%== y set SPSaves=1&& goto createSave
+IF %ans4%== n set SPSaves=0&& goto createSave
 IF NOT %ans4%== y echo Incorrect answer&& goto spFolder
 IF NOT %ans4%== n echo Incorrect answer&& goto spFolder
 
 IF %SPSaves%== 0 (call :createSave) else goto copyContent
 
 :createSave
-echo question
-set /p ansN=Create a new save file instead? [Y/N]
-IF %ansN%== y set CreateSave=1
-IF %ansN%== n set CreateSave=2
+echo.
+echo.
+set /p ansN=Create a new save file? [Y/N]
+IF %ansN%== y set CreateSave=1&& goto saveCreateDone
+IF %ansN%== n set CreateSave=2&& goto saveCreateDone
 IF NOT %ansN%== y echo Incorrect answer&& goto createSave
 IF NOT %ansN%== n echo Incorrect answer&& goto createSave
 
-echo succeed
-IF %CreateSave%== 2 (
-	set failed=You chose to not copy current SP saves or to create a new one, without a save file the server will not work.
-	goto errorEnd
+:saveCreateDone
+IF %SPSaves%== 0 (
+	IF %CreateSave%== 2 (
+		set failed=You chose to not copy current SP saves or to create a new one, without a save file the server will not work.
+		goto errorEnd
+	)
 )
 ::create a new save file using --create	
 call :getDateTime
@@ -428,11 +433,11 @@ echo  Sets up server write data location
 echo  Lets you pick the server port 
 echo -------------------------------------------------------------------------------
 echo.
-set /p ans4=Setup Server config file? [Y/N]
-IF %ansC%== y goto configServerData
-IF %ansC%== n goto useAnotherConfig
-IF NOT %ansC%== y echo Incorrect answer&& goto configSetup
-IF NOT %ansC%== n echo Incorrect answer&& goto configSetup
+set /p ansCS=Setup Server config file? [Y/N]
+IF %ansCS%== y goto configServerData
+IF %ansCS%== n goto useAnotherConfig
+IF NOT %ansCS%== y echo Incorrect answer&& goto configSetup
+IF NOT %ansCS%== n echo Incorrect answer&& goto configSetup
 
 :configServerData
 ::save configs and make new ones and a backup
@@ -805,7 +810,7 @@ IF %SaveSel%== 1 goto enterSave
 cls
 call :acsii
 ::for launching with user defined save
-cd %appdata%\Factorio\server\saves
+cd /d %appdata%\Factorio\server\saves
 echo -------------------------------------------------------------------------------
 echo  Enter save file name to load
 echo  Showing newest 10 save files
@@ -840,7 +845,7 @@ IF EXIST "%appdata%\Factorio\server\saves\%SelectedSave%" (
 
 :latestSave
 ::for launching with the newest save file
-cd %appdata%\Factorio\server\saves
+cd /d %appdata%\Factorio\server\saves
 for /F "delims=" %%I in ('dir *.zip /b /od') do set SaveFile=%%I
 
 echo -------------------------------------------------------------------------------
@@ -855,7 +860,7 @@ goto startServer
 :selectSPSave
 cls
 call :acsii
-cd %appdata%\Factorio\saves
+cd /d %appdata%\Factorio\saves
 echo -------------------------------------------------------------------------------
 echo  Enter save file name to load
 echo  Showing newest 10 Single Player save files
@@ -903,7 +908,7 @@ goto startServer
 :latestSPSave
 cls
 call :acsii
-cd %appdata%\Factorio\saves
+cd /d %appdata%\Factorio\saves
 for /F "delims=" %%G in ('dir *.zip /b /od') do (
 	set LatestSP=%%~nG
 	set LatestSPext=%%~xG
@@ -948,7 +953,7 @@ echo  To undo either set it to 0 or remove it.
 echo.
 echo -------------------------------------------------------------------------------
 echo.
-echo  Version: v1.1
+echo  Version: v1.11
 echo  Dated: 14/Apr/2016
 echo  Author: Scott Coxhead
 echo.
@@ -964,6 +969,8 @@ timeout 20
 :startServer
 cls
 
+IF [%SaveFile%]==[] set failed=Could not detect any save files, you should run this as administrator&& goto errorEnd
+
 ::grab port number from config-server.ini
 IF EXIST %ServerConfig% (
 	find "port=" %ServerConfig% | sort /r | date | find "=" > en#er.bat
@@ -975,7 +982,6 @@ set ServerPort=Could not find config-server.ini to identify port
 )
 ::put ip:port into user clipboard so they can send it to their friends!
 echo %CurrIP%:%ServerPort%| clip
-
 ::show info before server start and allow changes
 for /l %%N in (%OptionDelay% -1 1) do (
 if %%N leq 1 goto :executeServer
@@ -1097,8 +1103,9 @@ echo  ERROR
 echo  Reason: %failed%
 echo.
 echo ///////////////////////////////----------------\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-timeout 15
+pause
 color 07
+cls
 goto end
 
 :errorFix
@@ -1142,12 +1149,22 @@ type %FactorioServerConfig% | find /v "%3=" > BatchConfig.tmp
 copy /y BatchConfig.tmp %FactorioServerConfig%
 echo %3=%4 >> %FactorioServerConfig%
 del BatchConfig.tmp
-
-timeout 15
+echo.
+echo  If these errors are persistent read below:
+echo  You can [D]elete the config file by pressing D, this is unrecoverable and will have to be recreated.
+echo  This will not affect your saved games or Factorio install
+echo  Otherwise just [S]kip it
+echo.
+choice /c:DS /n /d:S /t:20 /m "[D]elete or [S]kip"
+IF %ERRORLEVEL%== 1 del %FactorioServerConfig%
+IF %ERRORLEVEL%== 2 echo  This will now exit
+timeout 5
 color 07
-EXIT /B 0
+cls
+goto end
 
 :end
+EXIT
 goto:eof
 
 
