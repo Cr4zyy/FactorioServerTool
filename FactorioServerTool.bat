@@ -1,6 +1,6 @@
 @echo off 
 setlocal
-:: Factorio Server Tool v1.11
+:: Factorio Server Tool v1.12
 :: 14/Apr/2016
 :: http://cr4zyb4st4rd.co.uk
 :: https://github.com/Cr4zyy/FactorioServerTool
@@ -556,7 +556,6 @@ echo  YOU will be able to connect with:
 echo  localhost
 echo -------------------------------------------------------------------------------
 set ChangeSaveInterval=0
-pause
 IF %ChangePortNumber%== 0  goto setSaveTimer
 IF %ChangePortNumber%== 1  goto startServer
 
@@ -965,7 +964,7 @@ echo  To undo either set it to 0 or remove it.
 echo.
 echo -------------------------------------------------------------------------------
 echo.
-echo  Version: v1.11
+echo  Version: v1.12
 echo  Dated: 14/Apr/2016
 echo  Author: Scott Coxhead
 echo.
@@ -980,7 +979,7 @@ timeout 20
 :startServer
 cls
 
-IF [%SaveFile%]==[] set failed=Could not detect any save files, you should run this as administrator&& goto errorEnd
+IF NOT EXIST %SaveFile% set failed=Could not detect any save files, you should run this as administrator&& goto errorEnd
 
 ::grab port number from config-server.ini
 IF EXIST %ServerConfig% (
