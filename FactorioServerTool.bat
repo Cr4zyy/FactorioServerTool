@@ -1,6 +1,6 @@
 @echo off 
 setlocal
-:: Factorio Server Tool v1.12
+:: Factorio Server Tool v0.1.13
 :: 14/Apr/2016
 :: http://cr4zyb4st4rd.co.uk
 :: https://github.com/Cr4zyy/FactorioServerTool
@@ -8,7 +8,7 @@ setlocal
 ::Skip this stuff only called when needed
 goto skip
 ::Functions and calls
-:acsii
+:ascii
 echo _______________________________________________________________________________
 echo -------------------------------------------------------------------------------
 echo            888888    db     dP""b8 888888  dP"Yb  88""Yb 88  dP"Yb  
@@ -42,18 +42,29 @@ goto:eof
 :skip
 ::scale cmd to fit nicely
 mode con: cols=80 lines=50
+::prettyness
+color 30
 ::grab and store ip because it echos annoying stuff
 for /f "skip=4 usebackq tokens=2" %%a in (`nslookup myip.opendns.com resolver1.opendns.com`) do set CurrIP=%%a
 cls
 
 :vars
 set BatchDir=%~dp0
+
+::Server Files
 set FactorioServerConfig=%appdata%\Factorio\FactorioServerConfig.ini
 set DefaultConfig=%appdata%\Factorio\config\config.ini
 set ServerConfig=%appdata%\Factorio\config\config-server.ini 
 set TempConfig=%appdata%\Factorio\config\config-temp.tmp
 set TempFile=%appdata%\Factorio\config\temp.tmp
 set BatchTemp=%appdata%\Factorio\BatchConfig.tmp
+
+:: Server folders
+set ServerSaveFolder=%appdata%\Factorio\server\saves
+set ServerModFolder=%appdata%\Factorio\server\mods
+set StandardSaveFolder=%appdata%\Factorio\saves
+set StandardModFolder=%appdata%\Factorio\mods
+set ServerFolder=%appdata%\Factorio\server
 
 :: Default settings/options
 set Latency=100
@@ -84,7 +95,7 @@ IF [%SetupValue%]==[1] (
 )
 
 :checkBatch
-call :acsii
+call :ascii
 echo ------------------------------------------------------------------------------  
 echo  Reading config options from file:
 echo  %FactorioServerConfig%
@@ -163,7 +174,7 @@ IF NOT EXIST %ServerConfig% set failed=Could not locate config-server.ini but fo
 ::Fast Start bypass
 IF %FastStart%== 1 goto latestSave
 
-::Check SaveSelection and goto appropiate choice
+:: Check SaveSelection and goto appropriate choice
 IF %SaveSelection%== 1 (
 	goto enterSave
 ) else (
@@ -173,7 +184,7 @@ IF %SaveSelection%== 1 (
 :setupBatch
 :: Begin server setup enter install dir
 ::look for factorio first
-call :acsii
+call :ascii
 
 echo  Locating Steam Directory...
 FOR /f "tokens=1,2*" %%E in ('reg query HKEY_CURRENT_USER\Software\Valve\Steam\') do if %%E==SteamPath set SteamDir=%%G
@@ -189,7 +200,7 @@ IF EXIST "%SteamDir%\steamapps\appmanifest_427520.acf" (
 )
 
 :checkInstallDir
-echo  Found Factorio folder checking for Factorio.exe
+echo  Found Factorio appmanifest checking for Factorio.exe
 IF EXIST "%SteamDir%\steamapps\common\Factorio\bin\x64\Factorio.exe" set InstallDir=%SteamDir%\steamapps\common\Factorio&&goto foundInstallDir
 echo  No Factorio.exe located, please make sure Factorio is installed.
 goto inputLocation
@@ -276,6 +287,7 @@ echo  Please enter the main Factorio Install Directory
 echo  e.g. E:\Program Files (x86)\Steam\steamapps\common\Factorio
 echo ------------------------------------------------------------------------------  
 echo.
+set /p InstallDir=
 choice /c:YN /n /m "Is the directory - %InstallDir%, correct? [Y/N]"
 
 IF NOT EXIST "%InstallDir%\bin\x64\Factorio.exe" echo  No Factorio.exe located, please make sure Factorio is installed.&& goto inputLocation
@@ -283,10 +295,13 @@ IF NOT EXIST "%InstallDir%\bin\x64\Factorio.exe" echo  No Factorio.exe located, 
 IF %ERRORLEVEL%== 1 goto makeConfig
 IF %ERRORLEVEL%== 2 goto inputLocation
 
-
-
-
 :makeConfig
+cls
+call :ascii
+echo ------------------------------------------------------------------------------  
+echo                          Welcome to the Setup Wizard!
+echo    This tool will help you through the configuration of your server options
+echo ------------------------------------------------------------------------------  
 set FactorioDir=%InstallDir%
 goto findSaveLoc
 
@@ -305,8 +320,8 @@ set failed=No Appdata folder
 goto errorEnd
 
 :saveData
-IF EXIST "%appdata%\Factorio\server\saves" (
-	IF EXIST "%appdata%\Factorio\config\config-server.ini" (
+IF EXIST "%ServerSaveFolder%" (
+	IF EXIST "%ServerConfig%" (
 		set ChangeSaveInterval=0
 		goto setSaveTimer
 	) else (
@@ -328,7 +343,7 @@ IF %ERRORLEVEL%== 2 set failed=You opted to not create server files, without the
 
 :createServerDir
 cls
-call :acsii
+call :ascii
 echo -------------------------------------------------------------------------------
 echo  Mods and Save files
 echo -------------------------------------------------------------------------------
@@ -370,7 +385,7 @@ set CreateSaveName=FST_%dateTime%.zip
 IF %CreateSave%== 1 "%FactorioDir%\bin\x64\Factorio.exe" --create %CreateSaveName%&& set SPSaves=1
 
 cls
-call :acsii
+call :ascii
 echo -------------------------------------------------------------------------------
 echo.
 echo  Created a new save file: %CreateSaveName%
@@ -386,18 +401,18 @@ echo.
 echo -------------------------------------------------------------------------------
 echo.
 ::make the directories before we use xcopy otherwise it promts about file/directory type and that's annoying
-mkdir %appdata%\Factorio\server
-mkdir %appdata%\Factorio\server\saves
-mkdir %appdata%\Factorio\server\mods
+mkdir %ServerFolder%
+mkdir %ServerSaveFolder%
+mkdir %ServerModFolder%
 
-IF %SPMods%== 1 xcopy /s /e /y %appdata%\Factorio\mods %appdata%\Factorio\server\mods
-IF %SPSaves%== 1 xcopy /s /e /y %appdata%\Factorio\saves %appdata%\Factorio\server\saves
+IF %SPMods%== 1 xcopy /s /e /y %StandardModFolder% %ServerModFolder%
+IF %SPSaves%== 1 xcopy /s /e /y %StandardSaveFolder% %ServerSaveFolder%
 timeout 1
 cls
 
 set failed=Failed to create the server files^(s^) and^/or folder^(s^), you may need to run this as an administrator ^(right-click^)
-IF EXIST "%appdata%\Factorio\server\saves" (
-	call :acsii
+IF EXIST "%ServerSaveFolder%" (
+	call :ascii
 	goto configSetup
 ) else (
 	goto errorEnd
@@ -495,7 +510,7 @@ set ChangePortNumber=0
 
 :pickPort
 cls
-call :acsii
+call :ascii
 :pickPortcls
 IF EXIST %ServerConfig% (
 	find "port=" %ServerConfig% | sort /r | date | find "=" > en#er.bat
@@ -512,14 +527,13 @@ echo  Current port number: %CurServPort%
 echo -------------------------------------------------------------------------------
 echo.
 set /p NewServerPort=
-::set /a NewServerPort=%NumServerPort%
 ::dont allow ports outside range
 call :GEOLE %NewServerPort% 1024 65535
 if %GEOLEvalue%== 1 (call :confirmPort) else goto portFail
 
 :portFail
 cls
-call :acsii
+call :ascii
 echo -------------------------------------------------------------------------------
 echo  The port %NewServerPort% has not been accepted 
 echo  It is outside the range of 1024-65535
@@ -531,8 +545,6 @@ goto pickPortcls
 choice /c:YN /n /m "Is the port - %NewServerPort%, correct? [Y/N]"
 IF %ERRORLEVEL%== 1 goto addPort
 IF %ERRORLEVEL%== 2 goto pickPort
-
-
 
 :addPort
 find "port=" %DefaultConfig% | sort /r | date | find "=" > en#er.bat
@@ -561,7 +573,7 @@ IF %ChangePortNumber%== 1  goto startServer
 
 :setSaveTimer
 cls
-call :acsii
+call :ascii
 :setSaveTimercls
 ::get current value if available
 IF EXIST %FactorioServerConfig% (
@@ -586,7 +598,7 @@ if %GEOLEvalue%== 1 (call :confirmTimer) else goto timerFail
 
 :timerFail
 cls
-call :acsii
+call :ascii
 echo -------------------------------------------------------------------------------
 echo  The value %AutoSaveTimer% has not been accepted 
 echo  It is outside the range of 1-500
@@ -619,7 +631,7 @@ IF %ChangeSaveInterval%== 1 (
 
 :setSaveSlots
 cls
-call :acsii
+call :ascii
 :setSaveSlotscls
 ::get current value if available
 IF EXIST %FactorioServerConfig% (
@@ -645,7 +657,7 @@ if %GEOLEvalue%== 1 (call :confirmSaveSlots) else goto saveSlotFail
 
 :saveSlotFail
 cls
-call :acsii
+call :ascii
 echo -------------------------------------------------------------------------------
 echo  The value %AutoSaveSlots% has not been accepted 
 echo  It is outside the range of 1-500
@@ -677,7 +689,7 @@ IF %ChangeSaveInterval%==1 (
 
 :setLatency
 cls
-call :acsii
+call :ascii
 :setLatencycls
 ::get current value if available
 IF EXIST %FactorioServerConfig% (
@@ -702,7 +714,7 @@ if %GEOLEvalue%== 1 (call :confirmLatency) else goto latencyFail
 
 :latencyFail
 cls
-call :acsii
+call :ascii
 echo -------------------------------------------------------------------------------
 echo  The value %Latency% has not been accepted 
 echo  It is outside the range of 1-5000
@@ -732,7 +744,7 @@ IF %ChangeLatency%== 1 (
 
 :serverComplete
 cls
-call :acsii
+call :ascii
 ::server setup complete now pick savefiles and write configs
 echo.
 echo -------------------------------------------------------------------------------
@@ -749,7 +761,7 @@ IF %ERRORLEVEL%== 2 set SaveSel=1&& goto writeConfig
 
 :resetSaveSelect
 cls
-call :acsii
+call :ascii
 echo.
 echo -------------------------------------------------------------------------------
 echo  Select newest server savefile for launch by default? ^(Y^)
@@ -758,7 +770,7 @@ echo  ^(Y^) is a faster method
 echo -------------------------------------------------------------------------------
 echo.
 
-choice /c:YN /n /m "Use newest save file ^(Y^) on launch or ^(N^) open file selection menu? [Y/N]"
+choice /c:YN /n /m "Use newest save file (Y) on launch or (N) open file selection menu? [Y/N]"
 IF %ERRORLEVEL%== 1 set SaveSel=0&& goto resetSaveConfigWrite
 IF %ERRORLEVEL%== 2 set SaveSel=1&& goto resetSaveConfigWrite
 
@@ -819,88 +831,88 @@ IF %SaveSel%== 1 goto enterSave
 
 :enterSave
 cls
-call :acsii
+call :ascii
 ::for launching with user defined save
-cd /d %appdata%\Factorio\server\saves
+cd /d %ServerSaveFolder%
 echo -------------------------------------------------------------------------------
 echo  Enter save file name to load
 echo  Showing newest 10 save files
 echo -------------------------------------------------------------------------------
 set n=0
-for /F "delims=" %%S in ('dir *.zip /b /o:-d') do (
+for /F "delims=" %%S in ('dir %ServerSaveFolder%\*.zip /b /o:-d') do (
   echo %%S
   set /a "n+=1, 1/(10-n)" 2>nul || goto :break
 )
 :break
 echo -------------------------------------------------------------------------------
-echo  Enter the save file name (savefile.zip). Tab to complete.
-echo  If you want to load the newest save leave blank.
+echo  Enter the save file name ^(savefile.zip^). Tab to complete.
+echo  If you want to load the newest save leave the input blank.
 echo -------------------------------------------------------------------------------
 echo.
 set /p SelectedSave=
-
+cd /d %BatchDir%
 IF [%SelectedSave%]==[] goto latestSave
 
-IF EXIST "%appdata%\Factorio\server\saves\%SelectedSave%" (
+
+
+IF EXIST "%ServerSaveFolder%\%SelectedSave%" (
 	set SaveFile=%SelectedSave%
 	goto startServer
 ) else (
-		IF EXIST "%appdata%\Factorio\server\saves\%SelectedSave%.zip" (
+		IF EXIST "%ServerSaveFolder%\%SelectedSave%.zip" (
 		set SaveFile=%SelectedSave%.zip
 		goto startServer
 	)
-	echo Save file does not exist, please retry.
+	echo Save file does not exist, please pick another save.
 	goto enterSave
 )
 
-
 :latestSave
 ::for launching with the newest save file
-cd /d %appdata%\Factorio\server\saves
-for /F "delims=" %%I in ('dir *.zip /b /od') do set SaveFile=%%I
-
+for /F "delims=" %%I in ('dir %ServerSaveFolder%\*.zip /b /od') do set SaveFile=%%I
 echo -------------------------------------------------------------------------------
 echo  Starting server with newest found save file
-echo  %SaveFile%
+echo  '%SaveFile%'
 echo -------------------------------------------------------------------------------
-
+::IF DEFINED somevariable echo Value exists
+IF [%SaveFile%]==[] set failed=Could not detect any save files you might need to run this as an administrator or create a new save file below&& call :errorEnd 1
 IF %FastStart%== 1 goto executeServer
 
 goto startServer
 
 :selectSPSave
 cls
-call :acsii
-cd /d %appdata%\Factorio\saves
+call :ascii
+cd /d %StandardSaveFolder%
 echo -------------------------------------------------------------------------------
 echo  Enter save file name to load
 echo  Showing newest 10 Single Player save files
 echo -------------------------------------------------------------------------------
-set n=0
-for /F "delims=" %%S in ('dir *.zip /b /o:-d') do (
+set ns=0
+for /F "delims=" %%S in ('dir %StandardSaveFolder%\*.zip /b /o:-d') do (
   echo %%S
-  set /a "n+=1, 1/(10-n)" 2>nul || goto :break1
+  set /a "ns+=1, 1/(10-ns)" 2>nul || goto :break1
 )
 :break1
 echo -------------------------------------------------------------------------------
-echo  Enter the save file name (savefile.zip). Tab to complete.
+echo  Enter the save file name ^(savefile.zip^). Tab to complete.
 echo  If you want to load the newest SP save leave blank.
-echo  SP saves will be copied and re-named in the server\saves folder
+echo  SP saves will be copied and re-named in the server^\saves folder
 echo -------------------------------------------------------------------------------
 echo.
 set /p SelectedSPSave=
-
+cd /d %BatchDir%
 IF [%SelectedSPSave%]==[] goto latestSPSave
 
-IF EXIST "%appdata%\Factorio\saves\%SelectedSPSave%" (
+IF EXIST "%StandardSaveFolder%\%SelectedSPSave%" (
 	set SaveFile=%SelectedSPSave%
 	goto copySave
 ) else (
-	IF EXIST "%appdata%\Factorio\saves\%SelectedSPSave%.zip" (
+	IF EXIST "%StandardSaveFolder%\%SelectedSPSave%.zip" (
 		set SaveFile=%SelectedSPSave%.zip
 		goto copySave
 	)
-	echo Save file does not exist, please retry.
+	echo Save file does not exist, please pick another save.
 	goto selectSPSave
 )
 
@@ -911,39 +923,42 @@ set SaveFileName=%SaveFile:~0,-4%
 call :getDateTime
 set newSaveName=%SaveFileName%_%dateTime%.zip
 
-copy /y %appdata%\Factorio\saves\%SelectedSPSave% %appdata%\Factorio\server\saves\%newSaveName%
+copy /y %StandardSaveFolder%\%SelectedSPSave% %ServerSaveFolder%\%newSaveName%
 set SaveFile=%newSaveName%
 
 goto startServer
 
 :latestSPSave
 cls
-call :acsii
-cd /d %appdata%\Factorio\saves
-for /F "delims=" %%G in ('dir *.zip /b /od') do (
+call :ascii
+::cd /d %StandardSaveFolder%
+for /F "delims=" %%G in ('dir %StandardSaveFolder%\*.zip /b /od') do (
 	set LatestSP=%%~nG
 	set LatestSPext=%%~xG
 )
 
 ::append datetime to the filename to avoid conflicts
-for /f "tokens=2 delims==" %%I in ('wmic os get localdatetime /format:list') do set dateTime=%%I
-set dateTime=%dateTime:~0,8%-%dateTime:~8,6%
+call :getDateTime
 set newSaveName=%LatestSP%_%dateTime%%LatestSPext%
+
+IF [%newSaveName%]==[] set failed=Could not detect any save files, you might need to run this as an administrator or create a new save file below&& call :errorEnd 1
 
 echo.
 echo -------------------------------------------------------------------------------
-echo  Latest SP save file is: %LatestSP%%LatestSPext%
-echo  Copying it and renaming it to: %newSaveName%
+echo  Latest SP save file is: '%LatestSP%%LatestSPext%'
+echo  Copying it and renaming it to: '%newSaveName%'
 echo -------------------------------------------------------------------------------
 echo.
-copy /y %appdata%\Factorio\saves\%LatestSP%%LatestSPext% %appdata%\Factorio\server\saves\%newSaveName%
+copy /y %StandardSaveFolder%\%LatestSP%%LatestSPext% %ServerSaveFolder%\%newSaveName%
 set SaveFile=%newSaveName%
+
+IF [%SaveFile%]==[] set failed=Could not detect any save files, you might need to run this as an administrator or create a new save file below&& call :errorEnd 1
 
 goto startServer
 
 :aboutThis
 cls
-call :acsii
+call :ascii
 echo -------------------------------------------------------------------------------
 echo.
 echo  A small batch script to help easily setup hosting a dedicated Factorio server 
@@ -964,23 +979,20 @@ echo  To undo either set it to 0 or remove it.
 echo.
 echo -------------------------------------------------------------------------------
 echo.
-echo  Version: v1.12
+echo  Version: v0.1.13
 echo  Dated: 14/Apr/2016
 echo  Author: Scott Coxhead
 echo.
 echo  Web: cr4zyb4st4rd.co.uk
 echo  Github: github.com/Cr4zyy/FactorioServerTool/
 echo.
-echo  Probably a scrip mess but it seems to work. ^:D
+echo  Probably a script mess but it seems to work, for me. ^:D
 echo.
 echo -------------------------------------------------------------------------------
 timeout 20
 
 :startServer
 cls
-
-IF NOT EXIST %SaveFile% set failed=Could not detect any save files, you should run this as administrator&& goto errorEnd
-
 ::grab port number from config-server.ini
 IF EXIST %ServerConfig% (
 	find "port=" %ServerConfig% | sort /r | date | find "=" > en#er.bat
@@ -997,7 +1009,7 @@ for /l %%N in (%OptionDelay% -1 1) do (
 if %%N leq 1 goto :executeServer
 cls
   
-call :acsii
+call :ascii
 echo.
 echo  Tell your friends to connect to ^(You can paste this, it's in your clipboard^!^):
 echo  %CurrIP%:%ServerPort%
@@ -1021,11 +1033,11 @@ echo ---------------------------------------------------------------------------
 echo.
 echo  Or select a following option:
 echo.
-echo    [1] Start the server now!              [6] Modify Server port
-echo    [2] Select server save file^(s^)         [7] Set initial save selection
-echo    [3] Single player save file^(s^)         [8] Open Factorio Appdata
-echo    [4] Modify Auto save time/slots        [9] Open Factorio Install Dir
-echo    [5] Modify Latency value               [A]bout
+echo      [1] START the server now!              [6] Modify Server PORT
+echo      [2] Select server save FILE^(s^)         [7] Set INITIAL save selection
+echo      [3] Single player save FILE^(s^)         [8] Open Factorio AppData Dir
+echo      [4] Modify Auto SAVE TIME^&SLOTS        [9] Open Factorio Install Dir
+echo      [5] Modify LATENCY value               [A]bout
 echo.
 echo -------------------------------------------------------------------------------
 echo.
@@ -1062,7 +1074,7 @@ goto startServer
 mode con: cols=80 lines=100
 
 color 84
-call :acsii
+call :ascii
 echo \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\-----\----/-----////////////////////////////////
 echo  \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\-----\--/-----//////////////////////////////// 
 echo.
@@ -1084,10 +1096,7 @@ cd /d %FactorioDir%
 start /wait bin\x64\Factorio.exe --start-server %SaveFile% --autosave-interval %AutoSaveTimer% --autosave-slots %AutoSaveSlots% --latency-ms %Latency% -c %ServerConfig%&&cd /d %BatchDir%&&color 07
 goto end
 
-:errorEnd
-cls
-call :acsii
-color 4f
+:errorASCII
 echo             MMMMMMMMMMMMMMMM             
 echo          MMM                MMMM         
 echo        MM                       MM       
@@ -1107,12 +1116,47 @@ echo        MMM                     MMM
 echo           MMM               MMM          
 echo               MMMMMMMMMMMMM              
 echo.
+goto:eof
+
+:errorEnd
+cls
+call :ascii
+color 4f
+call :errorASCII
 echo \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\----------------////////////////////////////////
 echo.
 echo  ERROR
 echo  Reason: %failed%
 echo.
 echo ///////////////////////////////----------------\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+IF %1== 1 (call :errorNewSave %random% ) else goto end
+
+:errorNewSave
+echo.
+echo  You can create a new savefile here
+echo  This save will be the newest file for the next run, if it still cant be detected you might need to run as admin.
+echo  This will only create a file named 'FST_FIX%1.zip' it will 
+echo.
+choice /c:CS /n /d:S /t:20 /m "[C]reate or [S]kip"
+IF %ERRORLEVEL%== 1 (	
+	"%FactorioDir%\bin\x64\Factorio.exe" --create FST_FIX%1.zip
+	timeout 1
+	mkdir %appdata%\Factorio\server\saves\
+	copy /y %appdata%\Factorio\saves\FST_FIX%1.zip %appdata%\Factorio\server\saves\
+	pause
+	echo This tool will now exit
+	timeout 5
+	color 07
+	cls
+	EXIT
+	goto:eof
+)
+IF %ERRORLEVEL%== 2 echo  This tool will now exit
+timeout 5
+color 07
+cls
+goto end
+
 pause
 color 07
 cls
@@ -1120,27 +1164,9 @@ goto end
 
 :errorFix
 cls
-call :acsii
-color 2f
-echo             MMMMMMMMMMMMMMMM             
-echo          MMM                MMMM         
-echo        MM                       MM       
-echo      MM                           MM     
-echo     MM                             MM    
-echo    M                                MM   
-echo   MM         mm           mm        MM  
-echo  MM         MMMM         MMMM         M      dP"Yb  88  88     88b 88  dP"Yb  
-echo  MM         MMMM         MMMM         MM    dP   Yb 88  88     88Yb88 dP   Yb 
-echo  MM                                   MM    Yb   dP 888888     88 Y88 Yb   dP 
-echo   M               ____                M      YbodP  88  88     88  Y8  YbodP 
-echo   MM        ./MMMMMMMMMMMM\.         MM  
-echo    MM      MM              MM       MM   
-echo     MM     m                m      MM    
-echo      MM                          MMM     
-echo        MMM                     MMM       
-echo           MMM               MMM          
-echo               MMMMMMMMMMMMM              
-echo.
+call :ascii
+color 1f
+call :errorASCII
 echo \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\----------------////////////////////////////////
 echo.
 echo  ERROR Config option for %1 %3 will be reset, you might need to adjust settings
@@ -1167,7 +1193,7 @@ echo  Otherwise just [S]kip it
 echo.
 choice /c:DS /n /d:S /t:20 /m "[D]elete or [S]kip"
 IF %ERRORLEVEL%== 1 del %FactorioServerConfig%
-IF %ERRORLEVEL%== 2 echo  This will now exit
+IF %ERRORLEVEL%== 2 echo  This tool will now exit
 timeout 5
 color 07
 cls
