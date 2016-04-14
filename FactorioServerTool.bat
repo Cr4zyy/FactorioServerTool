@@ -980,7 +980,7 @@ echo.
 echo -------------------------------------------------------------------------------
 echo.
 echo  Version: v0.1.13
-echo  Dated: 14/Apr/2016
+echo  Dated: 15/Apr/2016
 echo  Author: Scott Coxhead
 echo.
 echo  Web: cr4zyb4st4rd.co.uk
