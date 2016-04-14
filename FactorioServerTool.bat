@@ -1,11 +1,15 @@
 @echo off 
+setlocal
 :: Factorio Server Tool v1.11
-:: 13/Apr/2016
-:: www.cr4zyb4st4rd.co.uk
+:: 14/Apr/2016
+:: http://cr4zyb4st4rd.co.uk
+:: https://github.com/Cr4zyy/FactorioServerTool
 
+::Skip this stuff only called when needed
 goto skip
-
+::Functions and calls
 :acsii
+echo _______________________________________________________________________________
 echo -------------------------------------------------------------------------------
 echo            888888    db     dP""b8 888888  dP"Yb  88""Yb 88  dP"Yb  
 echo  ________  88__     dPYb   dP   `"   88   dP   Yb 88__dP 88 dP   Yb  ________
@@ -17,6 +21,7 @@ echo  `Ybo." 88__   88__dP  Yb  dP  88__   88__dP       88   dP   Yb dP   Yb 88
 echo  o.`Y8b 88""   88"Yb    YbdP   88""   88"Yb        88   Yb   dP Yb   dP 88  .o 
 echo  8bodP' 888888 88  Yb    YP    888888 88  Yb       88    YbodP   YbodP  88ood8 
 echo -------------------------------- Made by Cr4zy --------------------------------
+echo _______________________________________________________________________________
 echo.
 goto:eof
 
@@ -25,7 +30,7 @@ for /f "tokens=2 delims==" %%I in ('wmic os get localdatetime /format:list') do 
 set dateTime=%dateTime:~0,8%-%dateTime:~8,6%
 goto:eof
 
-:: > or eq to x & < or eq to y
+:: %2 > or eq to %1 < or eq to %3
 :GEOLE
 set GEOLEvalue=0
 set evalue=0
@@ -37,7 +42,7 @@ goto:eof
 :skip
 ::scale cmd to fit nicely
 mode con: cols=80 lines=50
-::grab and stop ip because it echos annoying stuff
+::grab and store ip because it echos annoying stuff
 for /f "skip=4 usebackq tokens=2" %%a in (`nslookup myip.opendns.com resolver1.opendns.com`) do set CurrIP=%%a
 cls
 
@@ -48,18 +53,21 @@ set DefaultConfig=%appdata%\Factorio\config\config.ini
 set ServerConfig=%appdata%\Factorio\config\config-server.ini 
 set TempConfig=%appdata%\Factorio\config\config-temp.tmp
 set TempFile=%appdata%\Factorio\config\temp.tmp
+set BatchTemp=%appdata%\Factorio\BatchConfig.tmp
+
+:: Default settings/options
 set Latency=100
 set AutoSaveTimer=5
 set AutoSaveSlots=3
-set NumServerPort=34197
+set NewServerPort=34197
 set InstallDir=0
 set OptionDelay=10
 set CreateSave=0
 set FastStart=0
 set SaveSelection=0
 set SetupComplete=0
-::check if batch has been run and config exists
 
+:: Check if batch has been run before and a config exists
 IF NOT EXIST %FactorioServerConfig% goto setupBatch
 
 find "SetupComplete=" %FactorioServerConfig% | sort /r | date | find "=" > en#er.bat
@@ -68,8 +76,6 @@ call en#er.bat
 del en?er.bat > nul
 
 call :GEOLE %SetupValue% 0 1
-IF %GEOLEvalue%== 1 echo SetupComplete = OK
-IF %GEOLEvalue%== 0 set failed=This error is so show that the tool has tried to fix the problem, please re-launch the tool and if this continues please delete %FactorioServerConfig%&& call :errorFix SetupComplete 1
 
 IF [%SetupValue%]==[1] ( 
 	goto checkBatch 
@@ -79,32 +85,37 @@ IF [%SetupValue%]==[1] (
 
 :checkBatch
 call :acsii
-
 echo ------------------------------------------------------------------------------  
 echo  Reading config options from file:
 echo  %FactorioServerConfig%
 echo ------------------------------------------------------------------------------  
+echo.
 
+::Check SetupComplete
+IF %GEOLEvalue%== 1 echo SetupComplete = OK
+IF %GEOLEvalue%== 0 set failed=This error is so show that the tool has tried to fix the problem, please re-launch the tool and if this continues please delete %FactorioServerConfig%&& call :errorFix SetupComplete 1
+
+::Check Install Directory
 find "InstallDir=" %FactorioServerConfig% | sort /r | date | find "=" > en#er.bat
 echo set SavedDir=%%6> enter.bat
 call en#er.bat
 del en?er.bat > nul
 set FactorioDir=%SavedDir:?= %
+
 IF EXIST "%FactorioDir%\bin\x64\Factorio.exe" echo InstallDir = OK
 IF NOT EXIST "%FactorioDir%\bin\x64\Factorio.exe" set failed=This error is so show that the tool has tried to fix the problem, please re-launch the tool and if this continues please delete %FactorioServerConfig%&& call :errorFix InstallDir 0 SetupComplete 0
-::echo Install Dir: %FactorioDir%
 
-
+::Check AutoSave Timer
 find "AutoSaveTimer=" %FactorioServerConfig% | sort /r | date | find "=" > en#er.bat
 echo set AutoSaveTimer=%%6> enter.bat
 call en#er.bat
 del en?er.bat > nul
-::echo Auto Save Interval: %AutoSaveTimer%
+
 call :GEOLE %AutoSaveTimer% 1 500
 IF %GEOLEvalue%== 1 echo AutoSaveTimer = OK
 IF %GEOLEvalue%== 0 set failed=This error is so show that the tool has tried to fix the problem, please re-launch the tool and if this continues please delete %FactorioServerConfig%&& call :errorFix AutoSaveTimer 5
 
-
+::Check AutoSave Slots
 find "AutoSaveSlots=" %FactorioServerConfig% | sort /r | date | find "=" > en#er.bat
 echo set AutoSaveSlots=%%6> enter.bat
 call en#er.bat
@@ -114,15 +125,17 @@ call :GEOLE %AutoSaveSlots% 1 500
 IF %GEOLEvalue%== 1 echo AutoSaveSlots = OK
 IF %GEOLEvalue%== 0 set failed=This error is so show that the tool has tried to fix the problem, please re-launch the tool and if this continues please delete %FactorioServerConfig%&& call :errorFix AutoSaveSlots 3
 
+::Check Latency
 find "Latency=" %FactorioServerConfig% | sort /r | date | find "=" > en#er.bat
 echo set Latency=%%6> enter.bat
 call en#er.bat
 del en?er.bat > nul
-::echo Latency: %Latency%
+
 call :GEOLE %Latency% 1 5000
 IF %GEOLEvalue%== 1 echo Latency = OK
 IF %GEOLEvalue%== 0 set failed=This error is so show that the tool has tried to fix the problem, please re-launch the tool and if this continues please delete %FactorioServerConfig%&& call :errorFix Latency 100
 
+::Check Save Selection
 find "SaveSelection=" %FactorioServerConfig% | sort /r | date | find "=" > en#er.bat
 echo set SaveSelection=%%6> enter.bat
 call en#er.bat
@@ -132,20 +145,25 @@ call :GEOLE %SaveSelection% 0 1
 IF %GEOLEvalue%== 1 echo SaveSelection = OK
 IF %GEOLEvalue%== 0 set failed=This error is so show that the tool has tried to fix the problem, please re-launch the tool and if this continues please delete %FactorioServerConfig%&& call :errorFix SaveSelection 0
 
+::Check Fast Start
 ::this value is not set by the batch but can be added as explained in the "About"
 find "FastStart=" %FactorioServerConfig% | sort /r | date | find "=" > en#er.bat
 echo set FastStart=%%6> enter.bat
 call en#er.bat
 del en?er.bat > nul
+
 call :GEOLE %FastStart% 0 1
 IF %GEOLEvalue%== 1 echo FastStart = OK
 IF %GEOLEvalue%== 0 set failed=This error is so show that the tool has tried to fix the problem, please re-launch the tool and if this continues please delete %FactorioServerConfig%&& call :errorFix FastStart 0
 echo.
 
+::Check for config-server.ini 
 IF NOT EXIST %ServerConfig% set failed=Could not locate config-server.ini but found the FactorioServerConfig.ini trying to repair please try again and if it fails delete: %FactorioServerConfig% && call :errorFix SetupComplete 0
 
+::Fast Start bypass
 IF %FastStart%== 1 goto latestSave
 
+::Check SaveSelection and goto appropiate choice
 IF %SaveSelection%== 1 (
 	goto enterSave
 ) else (
@@ -172,13 +190,10 @@ IF EXIST "%SteamDir%\steamapps\appmanifest_427520.acf" (
 
 :checkInstallDir
 echo  Found Factorio folder checking for Factorio.exe
-IF EXIST "%SteamDir%\steamapps\common\Factorio\bin\x64\Factorio.exe" (
-	set InstallDir=%SteamDir%\steamapps\common\Factorio
-	goto foundInstallDir
-) else (
-	echo  No Factorio.exe located, please make sure Factorio is installed.
-	goto inputLocation
-)
+IF EXIST "%SteamDir%\steamapps\common\Factorio\bin\x64\Factorio.exe" set InstallDir=%SteamDir%\steamapps\common\Factorio&&goto foundInstallDir
+echo  No Factorio.exe located, please make sure Factorio is installed.
+goto inputLocation
+
 
 
 
@@ -186,7 +201,7 @@ IF EXIST "%SteamDir%\steamapps\common\Factorio\bin\x64\Factorio.exe" (
 :: if factorio is not in the main steam dir it could be in an alternative steam library location so we find it here
 IF EXIST %SteamDir%\steamapps\libraryfolders.vdf (
 
-	echo  Searching for other steam Library folder locations
+	echo  Searching for other Steam Library folder locations...
 	set FactorioLib=0
 
 	set LibraryFile=%SteamDir%\steamapps\libraryfolders.vdf
@@ -250,11 +265,10 @@ echo  Found Factorio.exe installed in
 echo  %InstallDir%
 echo.
 echo ------------------------------------------------------------------------------  
-set /p ans0= Is this location correct [Y/N]?
-IF %ans0%== y goto makeConfig
-IF %ans0%== n goto inputLocation
-IF NOT %ans0%== y echo Incorrect answer&& goto foundInstallDir
-IF NOT %ans0%== n echo Incorrect answer&& goto foundInstallDir
+choice /c:YN /n /m "Is this location correct? [Y/N]"
+IF %ERRORLEVEL%== 1 goto makeConfig
+IF %ERRORLEVEL%== 2 goto inputLocation
+
 
 :inputLocation
 echo ------------------------------------------------------------------------------  
@@ -262,16 +276,15 @@ echo  Please enter the main Factorio Install Directory
 echo  e.g. E:\Program Files (x86)\Steam\steamapps\common\Factorio
 echo ------------------------------------------------------------------------------  
 echo.
-set /p InstallDir=
+choice /c:YN /n /m "Is the directory - %InstallDir%, correct? [Y/N]"
 
 IF NOT EXIST "%InstallDir%\bin\x64\Factorio.exe" echo  No Factorio.exe located, please make sure Factorio is installed.&& goto inputLocation
 
+IF %ERRORLEVEL%== 1 goto makeConfig
+IF %ERRORLEVEL%== 2 goto inputLocation
 
-set /p ans1=Is the directory - %InstallDir%, correct? [Y/N]
-IF %ans1%== y goto makeConfig
-IF %ans1%== n goto inputLocation
-IF NOT %ans1%== y echo Incorrect answer&& goto inputLocation
-IF NOT %ans1%== n echo Incorrect answer&& goto inputLocation
+
+
 
 :makeConfig
 set FactorioDir=%InstallDir%
@@ -308,12 +321,10 @@ echo ---------------------------------------------------------------------------
 echo  No server files located!
 echo ------------------------------------------------------------------------------  
 echo.
-set /p ans2=Would you like to create the server folders? [Y/N]
-IF %ans2%== y goto createServerDir
-set failed=You opted to not create server files, without them this tool can not operate
-IF %ans2%== n goto errorEnd
-IF NOT %ans2%== y echo Incorrect answer&& goto noServerSave
-IF NOT %ans2%== n echo Incorrect answer&& goto noServerSave
+choice /c:YN /n /m "Would you like to create the server folders? [Y/N]"
+IF %ERRORLEVEL%== 1 goto createServerDir
+IF %ERRORLEVEL%== 2 set failed=You opted to not create server files, without them this tool can not operate&& goto errorEnd
+
 
 :createServerDir
 cls
@@ -322,34 +333,29 @@ echo ---------------------------------------------------------------------------
 echo  Mods and Save files
 echo -------------------------------------------------------------------------------
 
-set /p ans3=Copy your Single Player mods folder? [Y/N]
-IF %ans3%== y set SPMods=1&& goto spFolder
-IF %ans3%== n set SPMods=0&& goto spFolder
-IF NOT %ans3%== y echo Incorrect answer&& goto createServerDir
-IF NOT %ans3%== n echo Incorrect answer&& goto createServerDir
+choice /c:YN /n /m "Copy your Single Player mods folder? [Y/N]"
+IF %ERRORLEVEL%== 1 set SPMods=1&& goto spFolder
+IF %ERRORLEVEL%== 2 set SPMods=0&& goto spFolder
 
 
 :spFolder
 echo.
 echo.
-echo Copy your Single Player saves folder? 
-echo Selecting No will still allow you to create a new save
-set /p ans4=[Y/N]?
-IF %ans4%== y set SPSaves=1&& goto createSave
-IF %ans4%== n set SPSaves=0&& goto createSave
-IF NOT %ans4%== y echo Incorrect answer&& goto spFolder
-IF NOT %ans4%== n echo Incorrect answer&& goto spFolder
+echo Selecting [N]o will still allow you to create a new save file
+choice /c:YN /n /m "Copy your Single Player saves folder? [Y/N]"
+IF %ERRORLEVEL%== 1 set SPSaves=1&& goto createSave
+IF %ERRORLEVEL%== 2 set SPSaves=0&& goto createSave
+
 
 IF %SPSaves%== 0 (call :createSave) else goto copyContent
 
 :createSave
 echo.
 echo.
-set /p ansN=Create a new save file? [Y/N]
-IF %ansN%== y set CreateSave=1&& goto saveCreateDone
-IF %ansN%== n set CreateSave=2&& goto saveCreateDone
-IF NOT %ansN%== y echo Incorrect answer&& goto createSave
-IF NOT %ansN%== n echo Incorrect answer&& goto createSave
+choice /c:YN /n /m "Create a new save file? [Y/N]"
+IF %ERRORLEVEL%== 1 set CreateSave=1&& goto saveCreateDone
+IF %ERRORLEVEL%== 2 set CreateSave=2&& goto saveCreateDone
+
 
 :saveCreateDone
 IF %SPSaves%== 0 (
@@ -363,7 +369,22 @@ call :getDateTime
 set CreateSaveName=FST_%dateTime%.zip
 IF %CreateSave%== 1 "%FactorioDir%\bin\x64\Factorio.exe" --create %CreateSaveName%&& set SPSaves=1
 
+cls
+call :acsii
+echo -------------------------------------------------------------------------------
+echo.
+echo  Created a new save file: %CreateSaveName%
+echo.
+echo -------------------------------------------------------------------------------
+echo.
+
 :copyContent
+echo -------------------------------------------------------------------------------
+echo.
+echo  Copying files to server directory
+echo.
+echo -------------------------------------------------------------------------------
+echo.
 ::make the directories before we use xcopy otherwise it promts about file/directory type and that's annoying
 mkdir %appdata%\Factorio\server
 mkdir %appdata%\Factorio\server\saves
@@ -390,11 +411,9 @@ echo  In the following location: %appdata%\Factorio\config\
 echo  Answering (N) no will allow you to choose another config if you have one
 echo -------------------------------------------------------------------------------
 echo.
-set /p ans8=Create a new config-server.ini? [Y/N]
-IF %ans8%== y goto configSetup
-IF %ans8%== n goto useAnotherConfig
-IF NOT %ans8%== y echo Incorrect answer&& goto checkConfig
-IF NOT %ans8%== n echo Incorrect answer&& goto checkConfig
+choice /c:YN /n /m "Create a new config-server.ini? [Y/N]"
+IF %ERRORLEVEL%== 1 goto configSetup
+IF %ERRORLEVEL%== 2 goto useAnotherConfig
 
 :useAnotherConfig
 echo -------------------------------------------------------------------------------
@@ -410,11 +429,10 @@ IF NOT EXIST %AlternateConfig% (
 	goto useAnotherConfig
 )
 
-set /p ans9=Is the location - %AlternateConfig%, correct? [Y/N]
-IF %ans9%== y goto copyConfig
-IF %ans9%== n goto useAnotherConfig
-IF NOT %ans9%== y echo Incorrect answer&& goto useAnotherConfig
-IF NOT %ans9%== n echo Incorrect answer&& goto useAnotherConfig
+choice /c:YN /n /m "Is the location - %AlternateConfig%, correct? [Y/N]"
+IF %ERRORLEVEL%== 1 goto copyConfig
+IF %ERRORLEVEL%== 2 goto useAnotherConfig
+
 
 :copyConfig
 echo -------------------------------------------------------------------------------
@@ -433,11 +451,9 @@ echo  Sets up server write data location
 echo  Lets you pick the server port 
 echo -------------------------------------------------------------------------------
 echo.
-set /p ansCS=Setup Server config file? [Y/N]
-IF %ansCS%== y goto configServerData
-IF %ansCS%== n goto useAnotherConfig
-IF NOT %ansCS%== y echo Incorrect answer&& goto configSetup
-IF NOT %ansCS%== n echo Incorrect answer&& goto configSetup
+choice /c:YN /n /m "Setup Server config file? [Y/N]"
+IF %ERRORLEVEL%== 1 goto configServerData
+IF %ERRORLEVEL%== 2 goto useAnotherConfig
 
 :configServerData
 ::save configs and make new ones and a backup
@@ -487,17 +503,17 @@ IF EXIST %ServerConfig% (
 	call en#er.bat
 	del en?er.bat > nul
 ) else (
-	set CurServPort=-NO SET OR FOUND-
+	set CurServPort=-NOT SET OR FOUND-
 )
 echo -------------------------------------------------------------------------------
-echo  Set your SERVER port number                                ^(recommend 34197^)
-echo  Current port number: %CurServPort%                     ^(Accepted Values: 1024-65535^)
+echo  Set your SERVER port number                               ^(Recommended 34197^)
+echo  This port needs to be forwarded as UDP          ^(Accepted Values: 1024-65535^)
+echo  Current port number: %CurServPort%
 echo -------------------------------------------------------------------------------
 echo.
-set /p NumServerPort=
-set /a "NewServerPort=%NumServerPort%"
+set /p NewServerPort=
+::set /a NewServerPort=%NumServerPort%
 ::dont allow ports outside range
-
 call :GEOLE %NewServerPort% 1024 65535
 if %GEOLEvalue%== 1 (call :confirmPort) else goto portFail
 
@@ -512,11 +528,11 @@ echo ---------------------------------------------------------------------------
 goto pickPortcls
 
 :confirmPort
-set /p ans6=Is the port - %NewServerPort%, correct? [Y/N]
-IF %ans6%== y goto addPort
-IF %ans6%== n goto pickPort
-IF NOT %ans6%== y echo Incorrect answer&& goto confirmPort
-IF NOT %ans6%== n echo Incorrect answer&& goto confirmPort
+choice /c:YN /n /m "Is the port - %NewServerPort%, correct? [Y/N]"
+IF %ERRORLEVEL%== 1 goto addPort
+IF %ERRORLEVEL%== 2 goto pickPort
+
+
 
 :addPort
 find "port=" %DefaultConfig% | sort /r | date | find "=" > en#er.bat
@@ -540,7 +556,7 @@ echo  YOU will be able to connect with:
 echo  localhost
 echo -------------------------------------------------------------------------------
 set ChangeSaveInterval=0
-
+pause
 IF %ChangePortNumber%== 0  goto setSaveTimer
 IF %ChangePortNumber%== 1  goto startServer
 
@@ -555,12 +571,13 @@ IF EXIST %FactorioServerConfig% (
 	call en#er.bat
 	del en?er.bat > nul
 ) else (
-	set CurSaveInt=-NOT SET OR FOUND- will default to 5mins, if not changed
+	set CurSaveInt=-NOT SET OR FOUND-
 )
 echo.
 echo -------------------------------------------------------------------------------
-echo  Set the auto save timer for the server, value in minutes    ^(recommended 5^)
-echo  Current save interval: %CurSaveInt%                       ^(Accepted values: 1-500^)
+echo  Set the auto save timer for the server                        ^(Recommended 5^)
+echo  Value is in minutes                                  ^(Accepted values: 1-500^)
+echo  Current save interval: %CurSaveInt%
 echo -------------------------------------------------------------------------------
 echo.
 set /p AutoSaveTimer=
@@ -579,25 +596,26 @@ echo ---------------------------------------------------------------------------
 goto setSaveTimercls
 
 :confirmTimer
-set /p ans7=Is this value - %AutoSaveTimer%, correct? [Y/N]
+choice /c:YN /n /m "Is this time value - %AutoSaveTimer% mins, correct? [Y/N]"
 IF %ChangeSaveInterval%== 0 (
-	IF %ans7%== y goto setSaveSlots
-	IF %ans7%== n goto setSaveTimer
-	IF NOT %ans7%== y echo Incorrect answer&& goto confirmTimer
-	IF NOT %ans7%== n echo Incorrect answer&& goto confirmTimer
+	IF %ERRORLEVEL%== 1 goto setSaveSlots
+	IF %ERRORLEVEL%== 2 goto setSaveTimer
+	
 )
 IF %ChangeSaveInterval%== 1 (
-echo -------------------------------------------------------------------------------
-echo  Writing config file - %FactorioServerConfig%
-echo -------------------------------------------------------------------------------
-	type %FactorioServerConfig% | find /v "AutoSaveTimer=" > BatchConfig.tmp
-	copy /y BatchConfig.tmp %FactorioServerConfig%
+	::if incorrect dont save config
+	IF %ERRORLEVEL%== 2 goto setSaveTimer
+	
+	echo -------------------------------------------------------------------------------
+	echo  Writing config file - %FactorioServerConfig%
+	echo -------------------------------------------------------------------------------
+	type %FactorioServerConfig% | find /v "AutoSaveTimer=" > %BatchTemp%
+	copy /y %BatchTemp% %FactorioServerConfig%
 	echo AutoSaveTimer=%AutoSaveTimer% >> %FactorioServerConfig%
-	del BatchConfig.tmp
-	IF %ans7%== n goto setSaveTimer
-	IF %ans7%== y goto setSaveSlots
-	IF NOT %ans7%== y echo Incorrect answer&& goto confirmTimer
-	IF NOT %ans7%== n echo Incorrect answer&& goto confirmTimer
+	del %BatchTemp%
+	
+	IF %ERRORLEVEL%== 1 goto setSaveSlots
+
 )
 
 :setSaveSlots
@@ -611,12 +629,13 @@ IF EXIST %FactorioServerConfig% (
 	call en#er.bat
 	del en?er.bat > nul
 ) else (
-	set CurSaveSlot=-NOT SET OR FOUND- will default to 3 slots
+	set CurSaveSlot=-NOT SET OR FOUND-
 )
 echo.
 echo -------------------------------------------------------------------------------
-echo  Set the amount of autosaves slots for the server           ^(recommended 3^)
-echo  Current autosave save slots: %CurSaveSlot%               ^(Accepted values: 1-500^)
+echo  Set the amount of autosaves slots for the server              ^(Recommended 3^)
+echo  Autosave overwrites files once past the set value    ^(Accepted values: 1-500^)
+echo  Current autosave save slots: %CurSaveSlot%
 echo -------------------------------------------------------------------------------
 echo.
 set /p AutoSaveSlots=
@@ -636,27 +655,25 @@ echo ---------------------------------------------------------------------------
 goto setSaveSlotscls
 
 :confirmSaveSlots
+choice /c:YN /n /m "Is this save amount value - %AutoSaveSlots%, correct? [Y/N]"
 
-set /p ansS=Is this value - %AutoSaveSlots%, correct? [Y/N]
 IF %ChangeSaveInterval%==0 (
-	IF %ansS%==y goto setLatency
-	IF %ansS%==n goto setSaveSlots
-	IF NOT %ansS%== y echo Incorrect answer&& goto confirmSaveSlots
-	IF NOT %ansS%== n echo Incorrect answer&& goto confirmSaveSlots
+	IF %ERRORLEVEL%== 1 goto setLatency
+	IF %ERRORLEVEL%== 2 goto setSaveSlots
 )
 IF %ChangeSaveInterval%==1 (
+	::dont save config if N
+	IF %ERRORLEVEL%== 2 goto setSaveSlots
+		
 	echo -------------------------------------------------------------------------------
 	echo  Writing config file - %FactorioServerConfig%
 	echo -------------------------------------------------------------------------------
-	type %FactorioServerConfig% | find /v "AutoSaveSlots=" > BatchConfig.tmp
-	copy /y BatchConfig.tmp %FactorioServerConfig%
+	type %FactorioServerConfig% | find /v "AutoSaveSlots=" > %BatchTemp%
+	copy /y %BatchTemp% %FactorioServerConfig%
 	echo AutoSaveSlots=%AutoSaveSlots% >> %FactorioServerConfig%
-	del BatchConfig.tmp
+	del %BatchTemp%
 	
-	IF %ansS%==y goto startServer
-	IF %ansS%==n goto setSaveSlots
-	IF NOT %ansS%== y echo Incorrect answer&& goto confirmSaveSlots
-	IF NOT %ansS%== n echo Incorrect answer&& goto confirmSaveSlots
+	IF %ERRORLEVEL%== 1 goto startServer
 )
 
 :setLatency
@@ -670,12 +687,12 @@ IF EXIST %FactorioServerConfig% (
 	call en#er.bat
 	del en?er.bat > nul
 ) else (
-	set CurLatValue=-NOT SET OR FOUND- will default to 100 ms
+	set CurLatValue=-NOT SET OR FOUND-
 )
 echo.
 echo -------------------------------------------------------------------------------
-echo  Set the server multiplayer latency                ^(Accepted values: 1-5000^)
-echo  ^(recommended worst player ping+30^)                            ^(default 100^)
+echo  Set the server multiplayer latency                  ^(Accepted values: 1-5000^)
+echo  ^(recommended worst player ping+30^)                              ^(default 100^)
 echo  Current latency value: %CurLatValue%
 echo -------------------------------------------------------------------------------
 echo.
@@ -695,25 +712,23 @@ echo ---------------------------------------------------------------------------
 goto setLatencycls
 
 :confirmLatency
-set /p ansL=Is this value - %Latency% ms, correct? [Y/N]
+choice /c:YN /n /m "Is this latency number - %Latency% ms, correct? [Y/N]"
 IF %ChangeLatency%== 0 (
-	IF %ansL%== y goto serverComplete
-	IF %ansL%== n goto setLatency
-	IF NOT %ansL%== y echo Incorrect answer&& goto confirmLatency
-	IF NOT %ansL%== n echo Incorrect answer&& goto confirmLatency
+	IF %ERRORLEVEL%== 1 goto serverComplete
+	IF %ERRORLEVEL%== 2 goto setLatency
 )
 IF %ChangeLatency%== 1 (
+	:: dont write config if N
+	IF %ERRORLEVEL%== 2 goto setLatency
 	echo -------------------------------------------------------------------------------
 	echo  Writing config file - %FactorioServerConfig%
 	echo -------------------------------------------------------------------------------
-	type %FactorioServerConfig% | find /v "Latency=" > BatchConfig.tmp
-	copy /y BatchConfig.tmp %FactorioServerConfig%
+	type %FactorioServerConfig% | find /v "Latency=" > %BatchTemp%
+	copy /y %BatchTemp% %FactorioServerConfig%
 	echo Latency=%Latency% >> %FactorioServerConfig%
-	del BatchConfig.tmp
-	IF %ansL%== y goto startServer
-	IF %ansL%== n goto setLatency
-	IF NOT %ansL%== y echo Incorrect answer&& goto confirmLatency
-	IF NOT %ansL%== n echo Incorrect answer&& goto confirmLatency
+	del %BatchTemp%
+	
+	IF %ERRORLEVEL%== 1 goto startServer
 )
 
 :serverComplete
@@ -727,11 +742,10 @@ echo  This setting will be remembered for the next time^(s^)
 echo  You can always select a different save file before the server launches
 echo -------------------------------------------------------------------------------
 echo.
-set /p ans5=Load newest save file (Y) by default or (N) to select the save file? [Y/N]
-IF %ans5%== y set SaveSel=0&& goto writeConfig
-IF %ans5%== n set SaveSel=1&& goto writeConfig
-IF NOT %ans5%== y echo Incorrect answer&& goto serverComplete
-IF NOT %ans5%== n echo Incorrect answer&& goto serverComplete
+
+choice /c:YN /n /m "Load newest save file (Y) by default or (N) to select the save file? [Y/N]"
+IF %ERRORLEVEL%== 1 set SaveSel=0&& goto writeConfig
+IF %ERRORLEVEL%== 2 set SaveSel=1&& goto writeConfig
 
 
 :resetSaveSelect
@@ -744,22 +758,20 @@ echo  or ^(N^) open the savefile selection menu each launch.
 echo  ^(Y^) is a faster method
 echo -------------------------------------------------------------------------------
 echo.
-set /p ansR=Use newest save file ^(Y^) on launch or ^(N^) open file selection menu? [Y/N]
 
-IF %ansR%== y set SaveSel=0&& goto resetSaveConfigWrite
-IF %ansR%== n set SaveSel=1&& goto resetSaveConfigWrite
-IF NOT %ansR%== y echo Incorrect answer&& goto resetSaveSelect
-IF NOT %ansR%== n echo Incorrect answer&& goto resetSaveSelect
+choice /c:YN /n /m "Use newest save file ^(Y^) on launch or ^(N^) open file selection menu? [Y/N]"
+IF %ERRORLEVEL%== 1 set SaveSel=0&& goto resetSaveConfigWrite
+IF %ERRORLEVEL%== 2 set SaveSel=1&& goto resetSaveConfigWrite
 
 :resetSaveConfigWrite
 echo -------------------------------------------------------------------------------
 echo  Writing config file - %FactorioServerConfig%
 echo -------------------------------------------------------------------------------
 
-type %FactorioServerConfig% | find /v "SaveSelection=" > BatchConfig.tmp
-copy /y BatchConfig.tmp %FactorioServerConfig%
+type %FactorioServerConfig% | find /v "SaveSelection=" > %BatchTemp%
+copy /y %BatchTemp% %FactorioServerConfig%
 echo SaveSelection=%SaveSel% >> %FactorioServerConfig%
-del BatchConfig.tmp
+del %BatchTemp%
 
 goto startServer
 
@@ -773,35 +785,35 @@ echo ---------------------------------------------------------------------------
 copy /y NUL %FactorioServerConfig% >NUL
 
 set InstallString=%InstallDir: =?%
-type %FactorioServerConfig% | find /v "InstallDir=" > BatchConfig.tmp
-copy /y BatchConfig.tmp %FactorioServerConfig%
+type %FactorioServerConfig% | find /v "InstallDir=" > %BatchTemp%
+copy /y %BatchTemp% %FactorioServerConfig%
 echo InstallDir=%InstallString%>> %FactorioServerConfig%
-del BatchConfig.tmp
+del %BatchTemp%
 
-type %FactorioServerConfig% | find /v "AutoSaveTimer=" > BatchConfig.tmp
-copy /y BatchConfig.tmp %FactorioServerConfig%
+type %FactorioServerConfig% | find /v "AutoSaveTimer=" > %BatchTemp%
+copy /y %BatchTemp% %FactorioServerConfig%
 echo AutoSaveTimer=%AutoSaveTimer% >> %FactorioServerConfig%
-del BatchConfig.tmp
+del %BatchTemp%
 
-type %FactorioServerConfig% | find /v "AutoSaveSlots=" > BatchConfig.tmp
-copy /y BatchConfig.tmp %FactorioServerConfig%
+type %FactorioServerConfig% | find /v "AutoSaveSlots=" > %BatchTemp%
+copy /y %BatchTemp% %FactorioServerConfig%
 echo AutoSaveSlots=%AutoSaveSlots% >> %FactorioServerConfig%
-del BatchConfig.tmp
+del %BatchTemp%
 
-type %FactorioServerConfig% | find /v "Latency=" > BatchConfig.tmp
-copy /y BatchConfig.tmp %FactorioServerConfig%
+type %FactorioServerConfig% | find /v "Latency=" > %BatchTemp%
+copy /y %BatchTemp% %FactorioServerConfig%
 echo Latency=%Latency% >> %FactorioServerConfig%
-del BatchConfig.tmp
+del %BatchTemp%
 
-type %FactorioServerConfig% | find /v "SaveSelection=" > BatchConfig.tmp
-copy /y BatchConfig.tmp %FactorioServerConfig%
+type %FactorioServerConfig% | find /v "SaveSelection=" > %BatchTemp%
+copy /y %BatchTemp% %FactorioServerConfig%
 echo SaveSelection=%SaveSel% >> %FactorioServerConfig%
-del BatchConfig.tmp
+del %BatchTemp%
 
-type %FactorioServerConfig% | find /v "SetupComplete=" > BatchConfig.tmp
-copy /y BatchConfig.tmp %FactorioServerConfig%
+type %FactorioServerConfig% | find /v "SetupComplete=" > %BatchTemp%
+copy /y %BatchTemp% %FactorioServerConfig%
 echo SetupComplete=1 >> %FactorioServerConfig%
-del BatchConfig.tmp
+del %BatchTemp%
 
 IF %SaveSel%== 0 goto latestSave
 IF %SaveSel%== 1 goto enterSave
@@ -961,7 +973,6 @@ echo  Web: cr4zyb4st4rd.co.uk
 echo  Github: github.com/Cr4zyy/FactorioServerTool/
 echo.
 echo  Probably a scrip mess but it seems to work. ^:D
-echo  www.cr4zyb4st4rd.co.uk
 echo.
 echo -------------------------------------------------------------------------------
 timeout 20
@@ -1133,22 +1144,22 @@ echo               MMMMMMMMMMMMM
 echo.
 echo \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\----------------////////////////////////////////
 echo.
-echo  ERROR The option for %1 %3 will be reset, you might need to adjust settings
+echo  ERROR Config option for %1 %3 will be reset, you might need to adjust settings
 echo.
 echo  Reason: %failed%
 echo.
 echo ///////////////////////////////----------------\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 echo.
 
-type %FactorioServerConfig% | find /v "%1=" > BatchConfig.tmp
-copy /y BatchConfig.tmp %FactorioServerConfig%
+type %FactorioServerConfig% | find /v "%1=" > %BatchTemp%
+copy /y %BatchTemp% %FactorioServerConfig%
 echo %1=%2 >> %FactorioServerConfig%
-del BatchConfig.tmp
+del %BatchTemp%
 
-type %FactorioServerConfig% | find /v "%3=" > BatchConfig.tmp
-copy /y BatchConfig.tmp %FactorioServerConfig%
+type %FactorioServerConfig% | find /v "%3=" > %BatchTemp%
+copy /y %BatchTemp% %FactorioServerConfig%
 echo %3=%4 >> %FactorioServerConfig%
-del BatchConfig.tmp
+del %BatchTemp%
 echo.
 echo  If these errors are persistent read below:
 echo  You can [D]elete the config file by pressing D, this is unrecoverable and will have to be recreated.
@@ -1164,8 +1175,6 @@ cls
 goto end
 
 :end
+endlocal
 EXIT
 goto:eof
-
-
-
