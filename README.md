@@ -8,7 +8,7 @@ Factorio Server Tool
 * Quickly switch between save files before hosting
 * Puts the server IP:Port quickly into your clipboard
 
-Not affiliated with factorio
+Not affiliated with Factorio
 
 ## Contact
 #### Cr4zy
