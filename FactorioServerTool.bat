@@ -1135,14 +1135,14 @@ IF %1== 1 (call :errorNewSave %random% ) else goto end
 echo.
 echo  You can create a new savefile here
 echo  This save will be the newest file for the next run, if it still cant be detected you might need to run as admin.
-echo  This will only create a file named 'FST_FIX%1.zip' it will 
+echo  This will only create a file named 'FST_newsave%1.zip' it will 
 echo.
 choice /c:CS /n /d:S /t:20 /m "[C]reate or [S]kip"
 IF %ERRORLEVEL%== 1 (	
-	"%FactorioDir%\bin\x64\Factorio.exe" --create FST_FIX%1.zip
+	"%FactorioDir%\bin\x64\Factorio.exe" --create FST_newsave%1.zip
 	timeout 1
 	mkdir %appdata%\Factorio\server\saves\
-	copy /y %appdata%\Factorio\saves\FST_FIX%1.zip %appdata%\Factorio\server\saves\
+	copy /y %appdata%\Factorio\saves\FST_newsave%1.zip %appdata%\Factorio\server\saves\
 	pause
 	echo This tool will now exit
 	timeout 5
