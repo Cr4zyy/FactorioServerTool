@@ -1,6 +1,6 @@
 @echo off 
 setlocal
-:: Factorio Server Tool v0.1.15
+:: Factorio Server Tool v0.1.16
 :: 16/Apr/2016
 :: http://cr4zyb4st4rd.co.uk
 :: https://github.com/Cr4zyy/FactorioServerTool
@@ -368,8 +368,8 @@ echo.
 set /p InstallDir=
 
 ::do a check for the supplied location
-IF EXIST "%InstallDir%\steamapps\common\Factorio\bin\win32" set WinOS=win32
-IF EXIST "%InstallDir%\steamapps\common\Factorio\bin\x64" set WinOS=x64
+IF EXIST "%InstallDir%\bin\win32" set WinOS=win32
+IF EXIST "%InstallDir%\bin\x64" set WinOS=x64
 IF NOT EXIST "%InstallDir%\bin\%WinOS%\Factorio.exe" echo  No Factorio.exe located, please make sure Factorio is installed.&& goto inputLocation
 
 choice /c:YN /n /m "Is the directory - %InstallDir%, correct? [Y/N]"
@@ -388,6 +388,9 @@ set FactorioDir=%InstallDir%
 goto findSaveLoc
 
 :findSaveLoc
+
+IF EXIST "%InstallDir%
+
 IF EXIST "%appdata%\Factorio" (
 	goto saveData
 ) else (
@@ -1088,7 +1091,7 @@ echo.
 echo ===============================================================================
 echo                                      ABOUT
 echo -------------------------------------------------------------------------------
-echo  Version: v0.1.15
+echo  Version: v0.1.16
 echo  Dated: 16/Apr/2016
 echo  Author: Scott Coxhead
 echo.
