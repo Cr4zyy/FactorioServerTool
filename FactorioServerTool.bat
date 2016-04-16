@@ -366,13 +366,12 @@ echo  e.g. E:\Program Files (x86)\Steam\steamapps\common\Factorio
 echo ------------------------------------------------------------------------------  
 echo.
 set /p InstallDir=
+::NUL WinOS incase it found a steam install but user wants another directory
 set WinOS=
 ::do a check for the supplied location
 IF EXIST "%InstallDir%\bin\win32" set WinOS=win32
-echo %WinOS%
-
 IF EXIST "%InstallDir%\bin\x64" set WinOS=x64
-echo %WinOS%
+
 IF NOT EXIST "%InstallDir%\bin\%WinOS%\Factorio.exe" echo  No Factorio.exe located, please make sure Factorio is installed.&& goto inputLocation
 
 choice /c:YN /n /m "Is the directory - %InstallDir%, correct? [Y/N]"
