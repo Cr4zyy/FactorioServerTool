@@ -1108,6 +1108,7 @@ FOR /F "tokens=2" %%m IN ('FINDSTR /L ^"true^" %ModList%') do (
 	echo %%m>> %TempFile%
 	)
 FOR /f "tokens=3" %%l in ('find /v /c "" %TempFile%') do set ModCount=%%~nl
+set /a "ModCount-=1"
 del %TempFile%
 
 ::grab port number from config-server.ini
