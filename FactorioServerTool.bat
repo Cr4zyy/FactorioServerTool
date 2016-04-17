@@ -2,7 +2,7 @@
 
 IF %* DEFINED goto help
 setlocal
-:: Factorio Server Tool v0.1.24
+:: Factorio Server Tool v0.1.25
 :: 17/Apr/2016
 :: http://cr4zyb4st4rd.co.uk
 :: https://github.com/Cr4zyy/FactorioServerTool
@@ -61,10 +61,13 @@ goto:eof
 
 ::Read the values from the ini config
 :iniRead
+::pushd to make sure we write these files to appdata where we can write
+pushd "%FacAppdata%"
 find "%1=" %3 | sort /r | date | find "=" > en#er.bat
 echo set %2=%%6> enter.bat
 call en#er.bat
 del en?er.bat > nul
+popd
 goto:eof
 
 :skip
@@ -86,8 +89,6 @@ set TempConfig=%appdata%\Factorio\config-temp.tmp
 set FacAppdata=%appdata%\Factorio
 set TempFile=%appdata%\Factorio\temp.tmp
 set writeTemp=%appdata%\Factorio\writeTemp.tmp
-set TempParam=%appdata%\Factorio\TempParam.tmp
-set LibariesTemp=%appdata%\Factorio\LibTemp.tmp
 set TempLib=%appdata%\Factorio\TempLib.tmp
 
 :: Default FST settings/options
@@ -95,7 +96,7 @@ set TempLib=%appdata%\Factorio\TempLib.tmp
 set Latency=100
 set AutoSaveTimer=5
 set AutoSaveSlots=3
-set NewServerPort=34197
+set NewServerPort=34190
 set InstallDir=0
 set OptionDelay=10
 set CreateSave=0
@@ -315,12 +316,12 @@ IF EXIST %SteamDir%\steamapps\libraryfolders.vdf (
 	set LibraryEntry=%LibraryEntry:"=%
 	::finally remove the ? we added earlier so we can have a working dir path
 	set LibraryEntry=%LibraryEntry:?= %
-	echo %LibraryEntry%>> %LibariesTemp%
+	echo %LibraryEntry%>> %TempFile%
 	goto :eof
 	
 	:break3
-	for /f "tokens=*" %%L in (%LibariesTemp%) do call :searchLib %%L
-	del %LibariesTemp%
+	for /f "tokens=*" %%L in (%TempFile%) do call :searchLib %%L
+	del %TempFile%
 	goto break4
 	
 	:searchLib
@@ -1089,8 +1090,7 @@ echo ===========================================================================
 echo                                      INFO
 echo -------------------------------------------------------------------------------
 echo.
-echo  A batch script to help easily setup hosting a dedicated Factorio server 
-echo  Windows 7+ (might work on Vista/XP who knows!)
+echo  A batch script to help easily setup hosting a dedicated Factorio server!
 echo.
 echo  This tool is not affiliated with Factorio in any way.
 echo.
@@ -1117,7 +1117,7 @@ echo.
 echo ===============================================================================
 echo                                      ABOUT
 echo -------------------------------------------------------------------------------
-echo  Version: v0.1.24
+echo  Version: v0.1.25
 echo  Dated: 17/Apr/2016
 echo  Author: Scott Coxhead
 echo.
@@ -1445,7 +1445,7 @@ goto end
 
 :end
 echo  This tool will now exit
-timeout 10
+timeout 5
 :quickend
 color 07
 cls
