@@ -353,7 +353,7 @@ echo  Found Factorio.exe installed in
 echo  %InstallDir%
 echo.
 echo ------------------------------------------------------------------------------
-choice /c:YN /n /m "Is this location correct? [Y/N]"
+choice /c:YN /n /m ">Is this location correct? [Y/N]"
 IF %ERRORLEVEL%== 1 goto makeConfig
 IF %ERRORLEVEL%== 2 goto inputLocation
 
@@ -378,7 +378,7 @@ IF EXIST "%InstallDir%\bin\x64" set WinOS=x64
 
 IF NOT EXIST "%InstallDir%\bin\%WinOS%\Factorio.exe" echo  No Factorio.exe located, please make sure Factorio is installed.&& goto inputLocation
 
-choice /c:YN /n /m "Is the directory - '%InstallDir%' correct? [Y/N]"
+choice /c:YN /n /m ">Is the directory - '%InstallDir%' correct? [Y/N]"
 
 IF %ERRORLEVEL%== 1 goto makeConfig
 IF %ERRORLEVEL%== 2 goto inputLocation
@@ -447,7 +447,7 @@ set failed=No Factorio Appdata folder was found, you need to launch the game to 
 call :errorEnd 0
 
 :saveData
-IF EXIST "%ServerSaveFolder%" (
+IF EXIST "%ServerSaveFolder%\*.zip" (
 	IF EXIST "%ServerConfig%" (
 		set ChangeSaveInterval=0
 		goto setSaveTimer
@@ -463,7 +463,7 @@ echo ---------------------------------------------------------------------------
 echo  You have no server data files, you will need to create them.
 echo ------------------------------------------------------------------------------  
 echo.
-choice /c:YN /n /m "Would you like to create the server folders? [Y/N]"
+choice /c:YN /n /m ">Would you like to create the server folders? [Y/N]"
 IF %ERRORLEVEL%== 1 goto createServerDir
 IF %ERRORLEVEL%== 2 set failed=You opted to not create server files!   Without them this tool can not operate&& call :errorEnd 0
 
@@ -475,7 +475,7 @@ echo ---------------------------------------------------------------------------
 echo  Server Mods and Save file setup
 echo -------------------------------------------------------------------------------
 echo.
-choice /c:YN /n /m "Copy your Single Player mods folder? [Y/N]"
+choice /c:YN /n /m ">Copy your Single Player mods folder? [Y/N]"
 IF %ERRORLEVEL%== 1 set SPMods=1&& goto spFolder
 IF %ERRORLEVEL%== 2 set SPMods=0&& goto spFolder
 
@@ -485,7 +485,7 @@ echo ---------------------------------------------------------------------------
 echo.
 echo  Selecting [N]o will still allow you to create a new save file
 echo.
-choice /c:YN /n /m "Copy your Single Player saves folder? [Y/N]"
+choice /c:YN /n /m ">Copy your Single Player saves folder? [Y/N]"
 IF %ERRORLEVEL%== 1 set SPSaves=1&& goto createSave
 IF %ERRORLEVEL%== 2 set SPSaves=0&& goto createSave
 
@@ -497,7 +497,7 @@ echo ---------------------------------------------------------------------------
 echo.
 echo  If you do not have any save files you will need to create one!
 echo.
-choice /c:YN /n /m "Create a new save file? [Y/N]"
+choice /c:YN /n /m ">Create a new save file? [Y/N]"
 IF %ERRORLEVEL%== 1 set CreateSave=1&& goto saveCreateDone
 IF %ERRORLEVEL%== 2 set CreateSave=2&& goto saveCreateDone
 
@@ -531,13 +531,14 @@ echo.
 echo -------------------------------------------------------------------------------
 echo.
 ::make the directories before we use xcopy otherwise it promts about file/directory type and that's annoying
-mkdir %ServerFolder%
-mkdir %ServerSaveFolder%
-mkdir %ServerModFolder%
+mkdir "%ServerFolder%"
+mkdir "%ServerSaveFolder%"
+mkdir "%ServerModFolder%"
 
-IF %SPMods%== 1 xcopy /s /e /y %StandardModFolder% %ServerModFolder%
-IF %SPSaves%== 1 xcopy /s /e /y %StandardSaveFolder% %ServerSaveFolder%
-timeout 5
+IF %SPMods%== 1 xcopy /s /e /y "%StandardModFolder%" "%ServerModFolder%"
+IF %SPSaves%== 1 xcopy /s /e /y "%StandardSaveFolder%" "%ServerSaveFolder%"
+timeout 2
+pause
 cls
 
 set failed=Failed to create the server files^(s^) and^/or folder^(s^)   This tool may need to be run as an administrator ^(right-click^) it to do so
@@ -558,7 +559,7 @@ echo.
 echo  Answering ^(N^)o will allow you to choose another config if you have one
 echo -------------------------------------------------------------------------------
 echo.
-choice /c:YN /n /m "Create a new config-server.ini? [Y/N]"
+choice /c:YN /n /m ">Create a new config-server.ini? [Y/N]"
 IF %ERRORLEVEL%== 1 goto configSetup
 IF %ERRORLEVEL%== 2 goto useAnotherConfig
 
@@ -580,7 +581,7 @@ IF NOT EXIST %AlternateConfig% (
 	IF %ERRORLEVEL%== 2 goto configSetup&& set AlternateConfig=
 )
 
-choice /c:YNC /n /m "Is the location - %AlternateConfig%, correct? [Y/N/C]"
+choice /c:YNC /n /m ">Is the location - %AlternateConfig%, correct? [Y/N/C]"
 IF %ERRORLEVEL%== 1 goto copyConfig
 IF %ERRORLEVEL%== 2 goto useAnotherConfig
 IF %ERRORLEVEL%== 3 goto configSetup&& set AlternateConfig=
@@ -603,19 +604,19 @@ echo  Sets up server write data location
 echo  Lets you pick the server port 
 echo -------------------------------------------------------------------------------
 echo.
-choice /c:YN /n /m "Setup Server config file? [Y/N]"
+choice /c:YN /n /m ">Setup Server config file? [Y/N]"
 IF %ERRORLEVEL%== 1 goto configServerData
 IF %ERRORLEVEL%== 2 goto useAnotherConfig
 
 :configServerData
 ::save configs and make new ones and a backup
 IF EXIST %DefaultConfig% (
-echo -------------------------------------------------------------------------------
-echo  Creating config.ini backup
-copy  %DefaultConfig% %FacCfg%\config-backup.ini 
-echo  Creating config-server.ini
-copy  %DefaultConfig% %ServerConfig%
-echo -------------------------------------------------------------------------------
+	echo -------------------------------------------------------------------------------
+	echo  Creating config.ini backup
+	copy  %DefaultConfig% %FacCfg%\config-backup.ini 
+	echo  Creating config-server.ini
+	copy  %DefaultConfig% %ServerConfig%
+	echo -------------------------------------------------------------------------------
 ) else (
 set failed=Could not locate a config.ini you need to start the game to create this file!   If you have started the game, the file couldn't be found in:  %FacCfg%
 call :errorEnd 0
@@ -673,7 +674,7 @@ echo ---------------------------------------------------------------------------
 goto pickPortcls
 
 :confirmPort
-choice /c:YN /n /m "Is the port - %NewServerPort%, correct? [Y/N]"
+choice /c:YN /n /m ">Is the port - %NewServerPort%, correct? [Y/N]"
 IF %ERRORLEVEL%== 1 goto addPort
 IF %ERRORLEVEL%== 2 goto pickPort
 
@@ -730,7 +731,7 @@ echo ---------------------------------------------------------------------------
 goto setSaveTimercls
 
 :confirmTimer
-choice /c:YN /n /m "Is this time value - %AutoSaveTimer% mins, correct? [Y/N]"
+choice /c:YN /n /m ">Is this time value - %AutoSaveTimer% mins, correct? [Y/N]"
 IF %ChangeSaveInterval%== 0 (
 	IF %ERRORLEVEL%== 1 goto setSaveSlots
 	IF %ERRORLEVEL%== 2 goto setSaveTimer
@@ -785,7 +786,7 @@ echo ---------------------------------------------------------------------------
 goto setSaveSlotscls
 
 :confirmSaveSlots
-choice /c:YN /n /m "Is this save amount value - %AutoSaveSlots%, correct? [Y/N]"
+choice /c:YN /n /m ">Is this save amount value - %AutoSaveSlots%, correct? [Y/N]"
 
 IF %ChangeSaveInterval%==0 (
 	IF %ERRORLEVEL%== 1 goto setLatency
@@ -818,7 +819,7 @@ echo ---------------------------------------------------------------------------
 echo  %enterRecommended%
 echo -------------------------------------------------------------------------------
 echo  Set the server multiplayer latency                         ^(Recommended: 100^)
-echo  ^(recommended worst player ping+30^)                  ^(Accepted values: 1-5000^)
+echo  ^(Good value: player ping+~50^)                       ^(Accepted values: 1-5000^)
 echo  Current latency value: %CurLatValue% ms
 echo -------------------------------------------------------------------------------
 echo.
@@ -838,7 +839,7 @@ echo ---------------------------------------------------------------------------
 goto setLatencycls
 
 :confirmLatency
-choice /c:YN /n /m "Is this latency number - %Latency% ms, correct? [Y/N]"
+choice /c:YN /n /m ">Is this latency number - %Latency% ms, correct? [Y/N]"
 IF %ChangeLatency%== 0 (
 	IF %ERRORLEVEL%== 1 goto serverComplete
 	IF %ERRORLEVEL%== 2 goto setLatency
@@ -867,7 +868,7 @@ echo  You can always select a different save file before the server launches
 echo -------------------------------------------------------------------------------
 echo.
 
-choice /c:YN /n /m "Load newest save file (Y) by default or (N) to select the save file? [Y/N]"
+choice /c:YN /n /m ">Load newest save file (Y) by default or (N) to select the save file? [Y/N]"
 IF %ERRORLEVEL%== 1 set SaveSel=0&& goto writeConfig
 IF %ERRORLEVEL%== 2 set SaveSel=1&& goto writeConfig
 
@@ -883,7 +884,7 @@ echo  ^(Y^) is a faster method
 echo -------------------------------------------------------------------------------
 echo.
 
-choice /c:YN /n /m "Use newest save file (Y) on launch or (N) open file selection menu? [Y/N]"
+choice /c:YN /n /m ">Use newest save file (Y) on launch or (N) open file selection menu? [Y/N]"
 IF %ERRORLEVEL%== 1 set SaveSel=0&& goto resetSaveConfigWrite
 IF %ERRORLEVEL%== 2 set SaveSel=1&& goto resetSaveConfigWrite
 
@@ -1156,7 +1157,7 @@ echo     [5] Modify LATENCY value                 [A]bout
 echo.
 echo -------------------------------------------------------------------------------
 echo.
-choice /c:123456789AB /n /d:B /t:1 /m "Select a choice from above"
+choice /c:123456789AB /n /d:B /t:1 /m ">Select a choice from above"
 IF NOT ERRORLEVEL==11 goto :breakout
 )
 
