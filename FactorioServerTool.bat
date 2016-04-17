@@ -1,6 +1,8 @@
 @echo off 
+
+IF %* DEFINED goto help
 setlocal
-:: Factorio Server Tool v0.1.23
+:: Factorio Server Tool v0.1.24
 :: 17/Apr/2016
 :: http://cr4zyb4st4rd.co.uk
 :: https://github.com/Cr4zyy/FactorioServerTool
@@ -1097,7 +1099,7 @@ echo  resulting from any defect, error or failure to perform.
 echo  Or for making it so easy to host a server you can't stop playing the game.
 echo.
 echo ===============================================================================
-echo            Extra commands you can add in FST_Config.ini
+echo                Extra commands you can add in FST_Config.ini
 echo -------------------------------------------------------------------------------
 echo.
 echo  Stores its own config file containing config options in:
@@ -1115,17 +1117,22 @@ echo.
 echo ===============================================================================
 echo                                      ABOUT
 echo -------------------------------------------------------------------------------
-echo  Version: v0.1.23
+echo  Version: v0.1.24
 echo  Dated: 17/Apr/2016
 echo  Author: Scott Coxhead
 echo.
-echo  Web: cr4zyb4st4rd.co.uk
 echo  Github: github.com/Cr4zyy/FactorioServerTool/
 echo.
 echo  Probably a script mess but it seems to work, for me. ^:D Hope it works for you.
 echo.
 echo -------------------------------------------------------------------------------
-timeout 30
+echo                                Select an option:
+echo -------------------------------------------------------------------------------
+choice /c:CGB /n /m ">Open [C]onfig file, go to [G]ithub or go [B]ack to options"
+
+IF %ERRORLEVEL%== 1 "%FST_Config%"
+IF %ERRORLEVEL%== 2 start http://github.com/Cr4zyy/FactorioServerTool/
+IF %ERRORLEVEL%== 3 goto startServer
 
 :startServer
 cls
@@ -1181,7 +1188,7 @@ echo     [1] START the server now!                [6] Modify Server PORT
 echo.
 echo     [2] Select server save FILE^(s^)           [7] Set INITIAL save selection
 echo.
-echo     [3] Single player save FILE^(s^)           [8] Open Factorio AppData Dir
+echo     [3] Single player save FILE^(s^)           [8] Open Factorio Data Dir
 echo.
 echo     [4] Modify Auto SAVE TIME ^& SLOTS        [9] Open Factorio Install Dir
 echo.
@@ -1195,7 +1202,6 @@ IF NOT ERRORLEVEL==11 goto :breakout
 
 :breakout
 IF %ERRORLEVEL%== 10 goto aboutThis
-
 IF %ERRORLEVEL%== 1 goto executeServer
 IF %ERRORLEVEL%== 2 goto enterSave
 IF %ERRORLEVEL%== 3 goto selectSPSave
