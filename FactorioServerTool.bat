@@ -103,17 +103,13 @@ set WinOS=0
 set ExtraParams=
 
 ::string vars
-set errorString1=The tool has attempted to fix this error, please re-launch the tool but if errors continue please delete: %FST_Config%
+set errorString1=The tool has attempted to fix the error that occured, please re-launch the tool.   If these errors continue please delete the config located:  %FST_Config%
 set enterRecommended=Enter/Return will input the default 'Recommended' value listed
 :: Check if batch has been run before and a config exists
 IF NOT EXIST %FST_Config% goto setupBatch
 
 ::  read ini  "Search STRG" "VAR to set" "File to search"
 call :iniRead SetupComplete SetupValue %FST_Config%
-REM find "SetupComplete=" %FST_Config% | sort /r | date | find "=" > en#er.bat
-REM echo set SetupValue=%%6> enter.bat
-REM call en#er.bat
-REM del en?er.bat > nul
 IF [%SetupValue%]==[] set failed=%errorString1%&& call :errorFix SetupComplete 1
 
 call :GEOLE %SetupValue% 0 1
@@ -137,12 +133,12 @@ echo.
 
 ::Check Install Directory
 call :iniRead InstallDir SavedDir %FST_Config%
-REM find "InstallDir=" %FST_Config% | sort /r | date | find "=" > en#er.bat
-REM echo set SavedDir=%%6> enter.bat
-REM call en#er.bat
-REM del en?er.bat > nul
 :: sets the dir in a usable fashion with spaces
 set FactorioDir=%SavedDir:?= %
+:: sets dir with no spaces
+set InstallDir=%SavedDir%
+IF EXIST "%FactorioDir%\bin" echo InstallDir = OK
+IF NOT EXIST "%FactorioDir%\bin" set failed=%errorString1%&& call :errorFix InstallDir 0 SetupComplete 0
 
 ::get FacData for var
 call :iniRead FacData FacData %FST_Config%
@@ -156,28 +152,14 @@ set StandardSaveFolder=%FacData%\saves
 set StandardModFolder=%FacData%\mods
 set ServerFolder=%FacData%\server
 
-:: sets dir with no spaces
-set InstallDir=%SavedDir%
-
-IF EXIST "%FactorioDir%\bin" echo InstallDir = OK
-IF NOT EXIST "%FactorioDir%\bin" set failed=%errorString1%&& call :errorFix InstallDir 0 SetupComplete 0
-
 ::Check for 32/64 bit Install
 call :iniRead WinOS WinOS %FST_Config%
-REM find "WinOS=" %FST_Config% | sort /r | date | find "=" > en#er.bat
-REM echo set WinOS=%%6> enter.bat
-REM call en#er.bat
-REM del en?er.bat > nul
 
 IF EXIST "%FactorioDir%\bin\%WinOS%\Factorio.exe" echo Executable = OK
 IF NOT EXIST "%FactorioDir%\bin\%WinOS%\Factorio.exe" set failed=%errorString1%&& call :errorFix WinOS 0
 
 ::Check AutoSave Timer
 call :iniRead AutoSaveTimer AutoSaveTimer %FST_Config%
-REM find "AutoSaveTimer=" %FST_Config% | sort /r | date | find "=" > en#er.bat
-REM echo set AutoSaveTimer=%%6> enter.bat
-REM call en#er.bat
-REM del en?er.bat > nul
 
 call :GEOLE %AutoSaveTimer% 1 500
 IF %GEOLEvalue%== 1 echo AutoSaveTimer = OK
@@ -186,10 +168,6 @@ IF %GEOLEerror%== 1 set failed=%errorString1%&& call :errorFix AutoSaveTimer 5
 
 ::Check AutoSave Slots
 call :iniRead AutoSaveSlots AutoSaveSlots %FST_Config%
-REM find "AutoSaveSlots=" %FST_Config% | sort /r | date | find "=" > en#er.bat
-REM echo set AutoSaveSlots=%%6> enter.bat
-REM call en#er.bat
-REM del en?er.bat > nul
 
 call :GEOLE %AutoSaveSlots% 1 500
 IF %GEOLEvalue%== 1 echo AutoSaveSlots = OK
@@ -198,10 +176,6 @@ IF %GEOLEerror%== 1 set failed=%errorString1%&& call :errorFix AutoSaveSlots 3
 
 ::Check Latency
 call :iniRead Latency Latency %FST_Config%
-REM find "Latency=" %FST_Config% | sort /r | date | find "=" > en#er.bat
-REM echo set Latency=%%6> enter.bat
-REM call en#er.bat
-REM del en?er.bat > nul
 
 call :GEOLE %Latency% 1 5000
 IF %GEOLEvalue%== 1 echo Latency = OK
@@ -210,10 +184,6 @@ IF %GEOLEerror%== 1 set failed=%errorString1%&& call :errorFix Latency 100
 
 ::Check Save Selection
 call :iniRead SaveSelection SaveSelection %FST_Config%
-REM find "SaveSelection=" %FST_Config% | sort /r | date | find "=" > en#er.bat
-REM echo set SaveSelection=%%6> enter.bat
-REM call en#er.bat
-REM del en?er.bat > nul
 
 call :GEOLE %SaveSelection% 0 1
 IF %GEOLEvalue%== 1 echo SaveSelection = OK
@@ -223,10 +193,6 @@ IF %GEOLEerror%== 1 set failed=%errorString1%&& call :errorFix SaveSelection 0
 ::Check Fast Start
 ::this value is not set by the batch but can be added as explained in the "About"
 call :iniRead FastStart FastStart %FST_Config%
-REM find "FastStart=" %FST_Config% | sort /r | date | find "=" > en#er.bat
-REM echo set FastStart=%%6> enter.bat
-REM call en#er.bat
-REM del en?er.bat > nul
 
 call :GEOLE %FastStart% 0 1
 IF %GEOLEvalue%== 1 echo FastStart = OK
@@ -251,10 +217,6 @@ IF %ERRORLEVEL%== 0 (
 	
 :pbreak1
 call :iniRead ExtraParams ExtraParams %FST_Config%
-REM find "ExtraParams=" %TempFile% | sort /r | date | find "=" > en#er.bat
-REM echo set ExtraParams=%%6> enter.bat
-REM call en#er.bat
-REM del en?er.bat > nul
 ::anything with 0/?/null is not an arg, so ignore
 IF [%ExtraParams%]==[0] set ExtraParams=&& del %TempFile%&& echo ExtraParams = NONE&& goto ParamsChecked
 IF [%ExtraParams%]==[] set ExtraParams=&& del %TempFile%&& echo ExtraParams = NONE&& goto ParamsChecked
@@ -385,16 +347,21 @@ echo.
 echo  Found Factorio.exe installed in
 echo  %InstallDir%
 echo.
-echo ------------------------------------------------------------------------------  
+echo ------------------------------------------------------------------------------
 choice /c:YN /n /m "Is this location correct? [Y/N]"
 IF %ERRORLEVEL%== 1 goto makeConfig
 IF %ERRORLEVEL%== 2 goto inputLocation
 
 
 :inputLocation
+cls
+call :ascii
 echo ------------------------------------------------------------------------------  
 echo  Please enter the main Factorio Install Directory
-echo  e.g. E:\Program Files (x86)\Steam\steamapps\common\Factorio
+echo.
+echo  This is the top level Factorio directory, it contains all the sub folders
+echo.
+echo  e.g. C:\Program Files (x86)\Factorio
 echo ------------------------------------------------------------------------------  
 echo.
 set /p InstallDir=
@@ -482,7 +449,7 @@ echo ---------------------------------------------------------------------------
 echo.
 choice /c:YN /n /m "Would you like to create the server folders? [Y/N]"
 IF %ERRORLEVEL%== 1 goto createServerDir
-IF %ERRORLEVEL%== 2 set failed=You opted to not create server files, without them this tool can not operate&& call :errorEnd 0
+IF %ERRORLEVEL%== 2 set failed=You opted to not create server files!   Without them this tool can not operate&& call :errorEnd 0
 
 
 :createServerDir
@@ -491,14 +458,14 @@ call :ascii
 echo -------------------------------------------------------------------------------
 echo  Server Mods and Save file setup
 echo -------------------------------------------------------------------------------
-
+echo.
 choice /c:YN /n /m "Copy your Single Player mods folder? [Y/N]"
 IF %ERRORLEVEL%== 1 set SPMods=1&& goto spFolder
 IF %ERRORLEVEL%== 2 set SPMods=0&& goto spFolder
 
 
 :spFolder
-echo.
+echo ------------------------------------------------------------------------------
 echo.
 echo  Selecting [N]o will still allow you to create a new save file
 echo.
@@ -510,7 +477,7 @@ IF %ERRORLEVEL%== 2 set SPSaves=0&& goto createSave
 IF %SPSaves%== 0 (call :createSave) else goto copyContent
 
 :createSave
-echo.
+echo ------------------------------------------------------------------------------  
 echo.
 echo  If you do not have any save files you will need to create one!
 echo.
@@ -522,7 +489,7 @@ IF %ERRORLEVEL%== 2 set CreateSave=2&& goto saveCreateDone
 :saveCreateDone
 IF %SPSaves%== 0 (
 	IF %CreateSave%== 2 (
-		set failed=You chose to not copy current SP saves or to create a new one, without a save file the server will not work.
+		set failed=You chose to not copy current SP saves or to create a new one.  Without a save file the server can not start.
 		call :errorEnd 0
 	)
 )
@@ -554,10 +521,10 @@ mkdir %ServerModFolder%
 
 IF %SPMods%== 1 xcopy /s /e /y %StandardModFolder% %ServerModFolder%
 IF %SPSaves%== 1 xcopy /s /e /y %StandardSaveFolder% %ServerSaveFolder%
-timeout 1
+timeout 5
 cls
 
-set failed=Failed to create the server files^(s^) and^/or folder^(s^), you may need to run this as an administrator ^(right-click^)
+set failed=Failed to create the server files^(s^) and^/or folder^(s^)   This tool may need to be run as an administrator ^(right-click^) it to do so
 IF EXIST "%ServerSaveFolder%" (
 	call :ascii
 	goto configSetup
@@ -569,8 +536,10 @@ IF EXIST "%ServerSaveFolder%" (
 echo -------------------------------------------------------------------------------
 echo  While this tool found server save files 
 echo  It could not locate a config-server.ini file
-echo  In the following location: %FacData%\config\
-echo  Answering (N) no will allow you to choose another config if you have one
+echo  In the following location: 
+echo  %FacData%\config
+echo.
+echo  Answering ^(N^)o will allow you to choose another config if you have one
 echo -------------------------------------------------------------------------------
 echo.
 choice /c:YN /n /m "Create a new config-server.ini? [Y/N]"
@@ -582,24 +551,29 @@ echo ---------------------------------------------------------------------------
 echo  If you are using another name for your config-server.ini
 echo  or have it stored in another location
 echo  enter the full filename below and it will be copied
+echo.
+echo  You can still [C]reate a new config, just input anything to get the choice
 echo -------------------------------------------------------------------------------
 echo.
 set /p AlternateConfig=
 
 IF NOT EXIST %AlternateConfig% (
-	echo No file located
-	goto useAnotherConfig
+	echo No file located you can [R]etry or [C]reate a new one
+	choice /c:RC /n /m "[R/C]"
+	IF %ERRORLEVEL%== 1 goto useAnotherConfig
+	IF %ERRORLEVEL%== 2 goto configSetup&& set AlternateConfig=
 )
 
-choice /c:YN /n /m "Is the location - %AlternateConfig%, correct? [Y/N]"
+choice /c:YNC /n /m "Is the location - %AlternateConfig%, correct? [Y/N/C]"
 IF %ERRORLEVEL%== 1 goto copyConfig
 IF %ERRORLEVEL%== 2 goto useAnotherConfig
+IF %ERRORLEVEL%== 3 goto configSetup&& set AlternateConfig=
 
 
 :copyConfig
 echo -------------------------------------------------------------------------------
 echo  Copying your config file into config-server.ini
-echo  Located in %FacData%\config\
+echo  Located in %FacData%\config
 echo -------------------------------------------------------------------------------
 copy %AlternateConfig% %ServerConfig%
 set ChangeSaveInterval=0
@@ -627,21 +601,13 @@ echo  Creating config-server.ini
 copy  %DefaultConfig% %ServerConfig%
 echo -------------------------------------------------------------------------------
 ) else (
-set failed=You have no config file in: %FacData%\config\ You need to start the game to create this file
+set failed=Could not locate a config.ini you need to start the game to create this file!   If you have started the game, the file couldn't be found in:  %FacData%\config\
 call :errorEnd 0
 )
 
 ::modify save locations for server
 call :iniRead read-data CurReadData %ServerConfig%
-REM find "read-data=" %DefaultConfig% | sort /r | date | find "=" > en#er.bat
-REM echo set CurReadData=%%6> enter.bat
-REM call en#er.bat
-REM del en?er.bat > nul
 call :iniRead write-data CurWriteData %ServerConfig%
-REM find "write-data=" %DefaultConfig% | sort /r | date | find "=" > en#er.bat
-REM echo set CurWriteData=%%6> enter.bat
-REM call en#er.bat
-REM del en?er.bat > nul
 
 type %ServerConfig% | find /v "[path]" > %TempConfig%
 type %TempConfig% | find /v "read-data=" > %ServerConfig%
@@ -662,10 +628,6 @@ call :ascii
 :pickPortcls
 IF EXIST %ServerConfig% (
 	call :iniRead port CurServPort %ServerConfig%
-	REM find "port=" %ServerConfig% | sort /r | date | find "=" > en#er.bat
-	REM echo set CurServPort=%%6> enter.bat
-	REM call en#er.bat
-	REM del en?er.bat > nul
 ) else (
 	set CurServPort=-NOT SET OR FOUND-
 )
@@ -701,16 +663,8 @@ IF %ERRORLEVEL%== 2 goto pickPort
 
 :addPort
 call :iniRead port CurrentPort %ServerConfig%
-REM find "port=" %DefaultConfig% | sort /r | date | find "=" > en#er.bat
-REM echo set CurrentPort=%%6> enter.bat
-REM call en#er.bat
-REM del en?er.bat > nul
 
 call :iniWrite port %NewServerPort% %ServerConfig%
-REM type %ServerConfig% | find /v "port=" > %TempConfig%
-REM copy /y %TempConfig% %ServerConfig%
-REM echo port=%NewServerPort%>> %ServerConfig%
-REM del %TempConfig%
 
 echo.
 echo -------------------------------------------------------------------------------
@@ -733,10 +687,6 @@ call :ascii
 ::get current value if available
 IF EXIST %FST_Config% (
 	call :iniRead AutoSaveTimer CurSaveInt %FST_Config%
-	REM find "AutoSaveTimer=" %FST_Config% | sort /r | date | find "=" > en#er.bat
-	REM echo set CurSaveInt=%%6> enter.bat
-	REM call en#er.bat
-	REM del en?er.bat > nul
 ) else (
 	set CurSaveInt=-NOT SET OR FOUND-
 )
@@ -779,10 +729,6 @@ IF %ChangeSaveInterval%== 1 (
 	echo  %FST_Config%
 	echo -------------------------------------------------------------------------------
 	call :iniWrite AutoSaveTimer %AutoSaveTimer% %FST_Config%
-	REM type %FST_Config% | find /v "AutoSaveTimer=" > %writeTemp%
-	REM copy /y %writeTemp% %FST_Config%
-	REM echo AutoSaveTimer=%AutoSaveTimer% >> %FST_Config%
-	REM del %writeTemp%
 	
 	IF %ERRORLEVEL%== 1 goto setSaveSlots
 
@@ -795,10 +741,6 @@ call :ascii
 ::get current value if available
 IF EXIST %FST_Config% (
 	call :iniRead AutoSaveSlots CurSaveSlot %FST_Config%
-	REM find "AutoSaveSlots=" %FST_Config% | sort /r | date | find "=" > en#er.bat
-	REM echo set CurSaveSlot=%%6> enter.bat
-	REM call en#er.bat
-	REM del en?er.bat > nul
 ) else (
 	set CurSaveSlot=-NOT SET OR FOUND-
 )
@@ -842,10 +784,6 @@ IF %ChangeSaveInterval%==1 (
 	echo  %FST_Config%
 	echo -------------------------------------------------------------------------------
 	call :iniWrite AutoSaveSlots %AutoSaveSlots% %FST_Config%
-	REM type %FST_Config% | find /v "AutoSaveSlots=" > %writeTemp%
-	REM copy /y %writeTemp% %FST_Config%
-	REM echo AutoSaveSlots=%AutoSaveSlots% >> %FST_Config%
-	REM del %writeTemp%
 	
 	IF %ERRORLEVEL%== 1 goto startServer
 )
@@ -857,10 +795,6 @@ call :ascii
 ::get current value if available
 IF EXIST %FST_Config% (
 	call :iniRead Latency CurLatValue %FST_Config%
-	REM find "Latency=" %FST_Config% | sort /r | date | find "=" > en#er.bat
-	REM echo set CurLatValue=%%6> enter.bat
-	REM call en#er.bat
-	REM del en?er.bat > nul
 ) else (
 	set CurLatValue=-NOT SET OR FOUND-
 )
@@ -901,10 +835,6 @@ IF %ChangeLatency%== 1 (
 	echo  %FST_Config%
 	echo -------------------------------------------------------------------------------
 	call :iniWrite Latency %Latency% %FST_Config%
-	REM type %FST_Config% | find /v "Latency=" > %writeTemp%
-	REM copy /y %writeTemp% %FST_Config%
-	REM echo Latency=%Latency% >> %FST_Config%
-	REM del %writeTemp%
 	
 	IF %ERRORLEVEL%== 1 goto startServer
 )
@@ -948,10 +878,6 @@ echo  %FST_Config%
 echo -------------------------------------------------------------------------------
 
 call :iniWrite SaveSelection %SaveSel% %FST_Config%
-REM type %FST_Config% | find /v "SaveSelection=" > %writeTemp%
-REM copy /y %writeTemp% %FST_Config%
-REM echo SaveSelection=%SaveSel% >> %FST_Config%
-REM del %writeTemp%
 
 goto startServer
 
@@ -967,40 +893,12 @@ copy /y NUL %FST_Config% >NUL
 
 set InstallString=%InstallDir: =?%
 call :iniWrite InstallDir %InstallString% %FST_Config%
-REM type %FST_Config% | find /v "InstallDir=" > %writeTemp%
-REM copy /y %writeTemp% %FST_Config%
-REM echo InstallDir=%InstallString%>> %FST_Config%
-REM del %writeTemp%
 call :iniWrite WinOS %WinOS% %FST_Config%
-REM type %FST_Config% | find /v "WinOS=" > %writeTemp%
-REM copy /y %writeTemp% %FST_Config%
-REM echo WinOS=%WinOS%>> %FST_Config%
-REM del %writeTemp%
 call :iniWrite AutoSaveTimer %AutoSaveTimer% %FST_Config%
-REM type %FST_Config% | find /v "AutoSaveTimer=" > %writeTemp%
-REM copy /y %writeTemp% %FST_Config%
-REM echo AutoSaveTimer=%AutoSaveTimer% >> %FST_Config%
-REM del %writeTemp%
 call :iniWrite AutoSaveSlots %AutoSaveSlots% %FST_Config%
-REM type %FST_Config% | find /v "AutoSaveSlots=" > %writeTemp%
-REM copy /y %writeTemp% %FST_Config%
-REM echo AutoSaveSlots=%AutoSaveSlots% >> %FST_Config%
-REM del %writeTemp%
 call :iniWrite Latency %Latency% %FST_Config%
-REM type %FST_Config% | find /v "Latency=" > %writeTemp%
-REM copy /y %writeTemp% %FST_Config%
-REM echo Latency=%Latency% >> %FST_Config%
-REM del %writeTemp%
 call :iniWrite SaveSelection %SaveSel% %FST_Config%
-REM type %FST_Config% | find /v "SaveSelection=" > %writeTemp%
-REM copy /y %writeTemp% %FST_Config%
-REM echo SaveSelection=%SaveSel% >> %FST_Config%
-REM del %writeTemp%
 call :iniWrite SetupComplete 1 %FST_Config%
-REM type %FST_Config% | find /v "SetupComplete=" > %writeTemp%
-REM copy /y %writeTemp% %FST_Config%
-REM echo SetupComplete=1 >> %FST_Config%
-REM del %writeTemp%
 set FactorioData=%FacData: =?%
 call :iniWrite FacData %FactorioData% %FST_Config%
 
@@ -1011,7 +909,7 @@ IF %SaveSel%== 1 goto enterSave
 cls
 call :ascii
 ::for launching with user defined save
-cd /d %ServerSaveFolder%
+pushd "%ServerSaveFolder%"
 echo -------------------------------------------------------------------------------
 echo  Enter save file name to load
 echo  Showing newest 10 save files
@@ -1028,7 +926,7 @@ echo  If you want to load the newest save leave the input blank.
 echo -------------------------------------------------------------------------------
 echo.
 set /p SelectedSave=
-cd /d %BatchDir%
+popd
 IF [%SelectedSave%]==[] goto latestSave
 
 
@@ -1053,14 +951,14 @@ echo  Starting server with newest found save file
 echo  '%SaveFile%'
 echo -------------------------------------------------------------------------------
 ::IF DEFINED somevariable echo Value exists
-IF [%SaveFile%]==[] set failed=Could not detect any save files you might need to run this as an administrator or create a new save file below&& call :errorEnd 1
+IF [%SaveFile%]==[] set failed=Could not detect any save files you might need to run this as an administrator  Or create a new save file below&& call :errorEnd 1
 IF %FastStart%== 1 goto executeServer
 goto startServer
 
 :selectSPSave
 cls
 call :ascii
-cd /d %StandardSaveFolder%
+pushd "%StandardSaveFolder%"
 echo -------------------------------------------------------------------------------
 echo  Enter save file name to load
 echo  Showing newest 10 Single Player save files
@@ -1078,7 +976,7 @@ echo  SP saves will be copied and re-named in the server^\saves folder
 echo -------------------------------------------------------------------------------
 echo.
 set /p SelectedSPSave=
-cd /d %BatchDir%
+popd
 IF [%SelectedSPSave%]==[] goto latestSPSave
 
 IF EXIST "%StandardSaveFolder%\%SelectedSPSave%" (
@@ -1108,7 +1006,7 @@ goto startServer
 :latestSPSave
 cls
 call :ascii
-::cd /d %StandardSaveFolder%
+
 for /F "delims=" %%G in ('dir %StandardSaveFolder%\*.zip /b /od') do (
 	set LatestSP=%%~nG
 	set LatestSPext=%%~xG
@@ -1117,8 +1015,7 @@ for /F "delims=" %%G in ('dir %StandardSaveFolder%\*.zip /b /od') do (
 ::append datetime to the filename to avoid conflicts
 call :getDateTime
 set newSaveName=%LatestSP%_%dateTime%%LatestSPext%
-IF [%newSaveName%]==[] set failed=Could not detect any save files, you might need to run this as an administrator or create a new save file below&& call :errorEnd 1
-
+IF [%newSaveName%]==[] set failed=Could not detect any save files you might need to run this as an administrator %N:% Or create a new save file below&& call :errorEnd 1
 echo.
 echo -------------------------------------------------------------------------------
 echo  Latest SP save file is: '%LatestSP%%LatestSPext%'
@@ -1128,7 +1025,7 @@ echo.
 copy /y %StandardSaveFolder%\%LatestSP%%LatestSPext% %ServerSaveFolder%\%newSaveName%
 set SaveFile=%newSaveName%
 
-IF [%SaveFile%]==[] set failed=Could not detect any save files, you might need to run this as an administrator or create a new save file below&& call :errorEnd 1
+IF [%SaveFile%]==[] set set failed=Could not detect any save files you might need to run this as an administrator %N:% Or create a new save file below&& call :errorEnd 1
 
 goto startServer
 
@@ -1183,21 +1080,19 @@ timeout 30
 cls
 ::mod counter (or close enough)
 pushd "%ServerModFolder%"
-FOR /F "tokens=2" %%m IN ('FINDSTR /L ^"true^" "mod-list.json"') do (
-	echo %%m>> %TempFile%
-	)
-popd
-FOR /f "tokens=3" %%l in ('find /v /c "" %TempFile%') do set ModCount=%%~nl
-set /a "ModCount-=1"
-del %TempFile%
+IF EXIST mod-list.json (
+	FOR /F "tokens=2" %%m IN ('FINDSTR /L ^"true^" "mod-list.json"') do (
+		echo %%m>> %TempFile%
+		)
+	popd
+	FOR /f "tokens=3" %%l in ('find /v /c "" %TempFile%') do set ModCount=%%~nl
+	set /a "ModCount-=1"
+	del %TempFile%
+)
 
 ::grab port number from config-server.ini
 IF EXIST %ServerConfig% (
 	call :iniRead port ServerPort %ServerConfig%
-	REM find "port=" %ServerConfig% | sort /r | date | find "=" > en#er.bat
-	REM echo set ServerPort=%%6> enter.bat
-	REM call en#er.bat
-	REM del en?er.bat > nul
 ) else (
 set ServerPort=Could not find config-server.ini to identify port
 )
@@ -1298,18 +1193,8 @@ echo.
 timeout 2
 echo.
 color 08
-cd /d %FactorioDir%
-echo %cd%
-echo %FactorioDir%
-echo %ServerSaveFolder%
-echo %SaveFile%
-echo %AutoSaveTimer%
-echo %AutoSaveSlots%
-echo %Latency%
-echo %ServerConfig%
-echo %ExtraParams%
-@echo  on
-start /wait bin\%WinOS%\Factorio.exe --start-server %SaveFile% --autosave-interval %AutoSaveTimer% --autosave-slots %AutoSaveSlots% --latency-ms %Latency% -c %ServerConfig% %ExtraParams%&&timeout 3&&cd /d %BatchDir%&&color 07&&call :restartScript
+pushd "%FactorioDir%"
+start /wait bin\%WinOS%\Factorio.exe --start-server %SaveFile% --autosave-interval %AutoSaveTimer% --autosave-slots %AutoSaveSlots% --latency-ms %Latency% -c %ServerConfig% %ExtraParams%&&timeout 2&&popd&&color 07&&call :restartScript
 goto end
 
 :restartScript
@@ -1374,6 +1259,7 @@ echo  ERROR
 echo  Reason: %failed%
 echo.
 echo ///////////////////////////////----------------\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+echo.
 IF %1== 1 (call :errorNewSave %random% ) else goto end
 pause
 echo ----------------------------------QUITTING-------------------------------------
@@ -1430,20 +1316,30 @@ echo  Reason: %failed%
 echo.
 echo ///////////////////////////////----------------\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 echo.
-pause
+
+
 set fvalue=0
-
+::If we can't find WinOS then check to see if InstallDir is set
 IF [%option1%]==[WinOS] set /a "fvalue=%fvalue%+1" 
-IF NOT %InstallDir%==0 set /a "fvalue=%fvalue%+2"
-
+IF NOT [%InstallDir%]==[0] set /a "fvalue=%fvalue%+2"
 IF %fvalue%== 3 (
-	IF EXIST "%FactorioDir%\bin\win32" set value1=win32&&goto resetConfigValue1
-	IF EXIST "%FactorioDir%\bin\x64" set value1=x64&&goto resetConfigValue1
+	:: if resetting WinOS and Install dir exists
+	:: check if InstallDir (FactorioDir is the dir with spaces) is correct and exists
+	IF EXIST "%FactorioDir%" (
+		::if so we can just reset the WinOS value
+		IF EXIST "%FactorioDir%\bin\win32" set value1=win32&&goto resetConfigValue1
+		IF EXIST "%FactorioDir%\bin\x64" set value1=x64&&goto resetConfigValue1
+	)
+	::if not then we reset InstallDir, SetupComplete which will force dir to be completely reset, including WinOS on next run
+	set option1=SetupComplete
+	set value1=0
+	set option2=InstallDir
+	set value2=0
 ) else IF %fvalue%== 1 (
 	set option1=SetupComplete
 	set value1=0
 	set option2=InstallDir
-	set value1=1
+	set value2=0
 	echo -------------------------------------------------------------------------------
 	echo  Could not determine the version of the game you have installed 
 	echo  You will need to setup your install directory again, sorry!
@@ -1454,19 +1350,10 @@ if [%option2%]==[] goto resetConfigValue1
 :resetConfigValue2
 call :iniWrite %option2% %value2% %FST_Config%
 
-REM type %FST_Config% | find /v "%option2%=" > %writeTemp%
-REM copy /y %writeTemp% %FST_Config%
-REM echo %option2%=%value2% >> %FST_Config%
-REM del %writeTemp%
 
 ::only reset the first value
 :resetConfigValue1
 call :iniWrite %option1% %value1% %FST_Config%
-REM type %FST_Config% | find /v "%option1%=" > %writeTemp%
-REM copy /y %writeTemp% %FST_Config%
-REM ::echo. >> %FST_Config%
-REM echo %option1%=%value1% >> %FST_Config%
-REM del %writeTemp%
 
 echo -------------------------------------------------------------------------------
 echo  Reset the config value^(s^) documented above in FST_Config.ini
