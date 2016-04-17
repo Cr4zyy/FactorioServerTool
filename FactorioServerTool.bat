@@ -80,7 +80,8 @@ set FSTbat=%~f0
 ::FactorioServerTool files
 ::Even if user doesnt use %appdata% write our temp/config because we can write there easily
 set FST_Config=%appdata%\Factorio\FST_Config.ini
-set TempConfig=%appdata%\Factorio\config\config-temp.tmp
+set TempConfig=%appdata%\Factorio\config-temp.tmp
+set FacAppdata=%appdata%\Factorio
 set TempFile=%appdata%\Factorio\temp.tmp
 set writeTemp=%appdata%\Factorio\writeTemp.tmp
 set TempParam=%appdata%\Factorio\TempParam.tmp
@@ -300,7 +301,7 @@ IF EXIST %SteamDir%\steamapps\libraryfolders.vdf (
 	:break2
 	::library dir only have \\ in them this way we can ignore other lines in the file
 	::also findstr sucks and hates spaces in directories so pushd
-	pushd "%FacData%"
+	pushd "%FacAppdata%"
 	for /f "tokens=2" %%d in ('findstr "\\" "Temp.tmp"') do call :processDir %%d
 	del Temp.tmp
 	popd
