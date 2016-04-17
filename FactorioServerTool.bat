@@ -143,9 +143,13 @@ IF NOT EXIST "%FactorioDir%\bin" set failed=%errorString1%&& call :errorFix Inst
 ::get FacData for var
 call :iniRead FacData FacData %FST_Config%
 set FacData=%FacData:?= %
+call :iniRead FactorioConfig FactorioConfig %FST_Config%
+set FacCfg=%FactorioConfig:?= %
 ::set the server data vars
-set DefaultConfig=%FacData%\config\config.ini
-set ServerConfig=%FacData%\config\config-server.ini 
+::faccfg
+set DefaultConfig=%FacCfg%\config\config.ini
+set ServerConfig=%FacCfg%\config\config-server.ini 
+::facdata
 set ServerSaveFolder=%FacData%\server\saves
 set ServerModFolder=%FacData%\server\mods
 set StandardSaveFolder=%FacData%\saves
@@ -394,22 +398,33 @@ echo ---------------------------------------------------------------------------
 echo  Locating default location for config, mod and save folders
 echo ------------------------------------------------------------------------------
 set ConfigPathFile=config-path.cfg
-IF EXIST %InstallDir%\%ConfigPathFile% (
+IF EXIST "%InstallDir%\%ConfigPathFile%" (
 	pushd "%InstallDir%"
+	::config location
 	FOR /f "delims=__ tokens=3" %%i in ('findstr "config-path=" "%ConfigPathFile%"') do set ConfigDefault=%%i
-	FOR /f "delims=__ tokens=4" %%j in ('findstr "config-path=" "%ConfigPathFile%"') do set FacDataPath=%%j
+	FOR /f "delims=__ tokens=4" %%j in ('findstr "config-path=" "%ConfigPathFile%"') do set FacCfgPath=%%j
+	::data location
+	FOR /f "delims== tokens=2" %%i in ('findstr "use-system-read-write-data-directories=" "%ConfigPathFile%"') do set DataDefault=%%i
 	popd
 )
-set FacDataPath=%FacDataPath:/=\%
-set FacDataPath=%FacDataPath:~1%
-::the last part of the config path refers to the config folder, so we can go up a level to end up in the folder everything is kept in
-IF [%ConfigDefault%]==[system-write-data] set FacData=%appdata%\Factorio\%FacDataPath%\..
+set FacCfgPath=%FacCfgPath:/=\%
+set FacCfgPath=%FacCfgPath:~1%
+
+::The last part of the config path refers to the config folder so add it to the directory location
+IF [%ConfigDefault%]==[system-write-data] set FacCfg=%appdata%\Factorio\%FacCfgPath%
 ::While the default folder would be the %InstallDir% as it's configurable check for the dir anyway
-IF [%ConfigDefault%]==[executable] set FacData=%InstallDir%\bin\%WinOS%\%FacDataPath%\..
+IF [%ConfigDefault%]==[executable] set FacCfg=%InstallDir%\bin\%WinOS%\%FacCfgPath%
+
+::Check where data is stored by default
+IF [%DataDefault%]==[true] set FacData=%appdata%\Factorio
+::if not using the system data dir use the config dir and go up a level to find the data location
+IF [%DataDefault%]==[false] set FacData=%FacCfg%\..
+
 ::Now that we know the actual data locations we can set the vars (for this run, we store and set again on next run)
 :: Factorio variables
-set DefaultConfig=%FacData%\config\config.ini
-set ServerConfig=%FacData%\config\config-server.ini 
+set DefaultConfig=%FacCfg%\config.ini
+set ServerConfig=%FacCfg%\config-server.ini 
+
 set ServerSaveFolder=%FacData%\server\saves
 set ServerModFolder=%FacData%\server\mods
 set StandardSaveFolder=%FacData%\saves
@@ -537,7 +552,7 @@ echo ---------------------------------------------------------------------------
 echo  While this tool found server save files 
 echo  It could not locate a config-server.ini file
 echo  In the following location: 
-echo  %FacData%\config
+echo  %FacCfg%
 echo.
 echo  Answering ^(N^)o will allow you to choose another config if you have one
 echo -------------------------------------------------------------------------------
@@ -573,7 +588,7 @@ IF %ERRORLEVEL%== 3 goto configSetup&& set AlternateConfig=
 :copyConfig
 echo -------------------------------------------------------------------------------
 echo  Copying your config file into config-server.ini
-echo  Located in %FacData%\config
+echo  Located in %FacCfg%
 echo -------------------------------------------------------------------------------
 copy %AlternateConfig% %ServerConfig%
 set ChangeSaveInterval=0
@@ -596,12 +611,12 @@ IF %ERRORLEVEL%== 2 goto useAnotherConfig
 IF EXIST %DefaultConfig% (
 echo -------------------------------------------------------------------------------
 echo  Creating config.ini backup
-copy  %DefaultConfig% %FacData%\config\config-backup.ini 
+copy  %DefaultConfig% %FacCfg%\config-backup.ini 
 echo  Creating config-server.ini
 copy  %DefaultConfig% %ServerConfig%
 echo -------------------------------------------------------------------------------
 ) else (
-set failed=Could not locate a config.ini you need to start the game to create this file!   If you have started the game, the file couldn't be found in:  %FacData%\config\
+set failed=Could not locate a config.ini you need to start the game to create this file!   If you have started the game, the file couldn't be found in:  %FacCfg%
 call :errorEnd 0
 )
 
@@ -901,6 +916,8 @@ call :iniWrite SaveSelection %SaveSel% %FST_Config%
 call :iniWrite SetupComplete 1 %FST_Config%
 set FactorioData=%FacData: =?%
 call :iniWrite FacData %FactorioData% %FST_Config%
+set FactorioConfig=%FacCfg: =?%
+call :iniWrite FacConfig %FactorioConfig% %FST_Config%
 
 IF %SaveSel%== 0 goto latestSave
 IF %SaveSel%== 1 goto enterSave
