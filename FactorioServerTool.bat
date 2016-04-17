@@ -198,7 +198,7 @@ IF %GEOLEerror%== 1 set failed=%errorString1%&& call :errorFix SaveSelection 0
 ::this value is not set by the batch but can be added as explained in the "About"
 call :iniRead FastStart FastStart "%FST_Config%"
 call :GEOLE %FastStart% 0 1
-IF %GEOLEvalue%== 1 echo FastStart = OK
+IF %GEOLEvalue%== 1 ( IF %FastStart%== 1 echo FastStart = OK )
 IF %GEOLEvalue%== 0 set failed=%errorString1%&& call :errorFix FastStart 0
 IF %GEOLEerror%== 1 set failed=%errorString1%&& call :errorFix FastStart 0
 
@@ -236,7 +236,6 @@ echo ExtraParams = NONE
 echo.
 echo.
 ::do Fast Start bypass
-pause
 IF %FastStart%== 1 goto latestSave
 :: Check SaveSelection and goto appropriate choice
 IF %SaveSelection%== 1 (
