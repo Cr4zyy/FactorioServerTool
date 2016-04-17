@@ -11,6 +11,7 @@ Factorio Server Tool
 * Add "FastStart=" to the config to skip the options screen and go straight to server start
 * Also "ExtraParams=" to add any custom params not supported, both are documented under "About" from the options
 * Puts the server IP:Port quickly into your clipboard at runtime
+* Batch can be run from any location
 
 Not affiliated with Factorio
 
