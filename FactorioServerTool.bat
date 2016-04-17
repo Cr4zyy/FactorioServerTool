@@ -1,6 +1,6 @@
 @echo off 
 setlocal
-:: Factorio Server Tool v0.1.22
+:: Factorio Server Tool v0.1.23
 :: 17/Apr/2016
 :: http://cr4zyb4st4rd.co.uk
 :: https://github.com/Cr4zyy/FactorioServerTool
@@ -51,7 +51,7 @@ goto:eof
 
 ::Write values to ini config
 :iniWrite
-type %3 | find /v "%1=" > %writeTemp%
+type %3 | find /v "%1=" > "%writeTemp%"
 copy /y %writeTemp% %3
 echo %1=%2 >> %3
 del %writeTemp%
@@ -107,7 +107,7 @@ set ExtraParams=
 set errorString1=The tool has attempted to fix the error that occured, please re-launch the tool. If these errors continue please delete the config located:  %FST_Config%
 set enterRecommended=       Enter/Return will input the default 'Recommended' value listed
 :: Check if batch has been run before and a config exists
-IF NOT EXIST %FST_Config% goto setupBatch
+IF NOT EXIST "%FST_Config%" goto setupBatch
 
 
 ::  read ini  "Search STRG" "VAR to set" "File to search"
@@ -134,6 +134,7 @@ call :GEOLE %SetupValue% 0 1
 IF %GEOLEvalue%== 1 echo SetupComplete = OK
 IF %GEOLEvalue%== 0 set failed=%errorString1%&& call :errorFix SetupComplete 1
 IF %GEOLEerror%== 1 set failed=%errorString1%&& call :errorFix SetupComplete 1
+
 
 ::Check Install Directory
 call :iniRead InstallDir SavedDir "%FST_Config%"
@@ -206,9 +207,9 @@ IF NOT EXIST %ServerConfig% set failed=%errorString1%&& call :errorFix SetupComp
 
 ::Check ExtraParams
 ::this value is not set by the batch but can be added as explained in the "About"
-find "ExtraParams=" %FST_Config% > NUL
+find "ExtraParams=" "%FST_Config%" > NUL
 IF %ERRORLEVEL%== 0 (
-	for /f "tokens=*" %%p in (%FST_Config%) do call :processParam %%p
+	for /f "tokens=*" %%p in ("%FST_Config%") do call :processParam %%p
 	goto pbreak1
 
 	:processParam
@@ -217,14 +218,15 @@ IF %ERRORLEVEL%== 0 (
 	goto :eof
 	
 :pbreak1
-call :iniRead ExtraParams ExtraParams "%FST_Config%"
+find "ExtraParams=" "%TempFile%" | find "=" > "%TempConfig%"
+for /f "tokens=2 delims==" %%d in (%TempConfig%) do set ExtraParams=%%d
 ::anything with 0/?/null is not an arg, so ignore
-IF [%ExtraParams%]==[0] set ExtraParams=&& del %TempFile%&& echo ExtraParams = NONE&& goto ParamsChecked
-IF [%ExtraParams%]==[] set ExtraParams=&& del %TempFile%&& echo ExtraParams = NONE&& goto ParamsChecked
-
+IF "%ExtraParams%"=="0" set ExtraParams=&& del %TempFile%&& echo ExtraParams = NONE&& goto ParamsChecked
+IF "%ExtraParams%"=="" set ExtraParams=&& del %TempFile%&& echo ExtraParams = NONE&& goto ParamsChecked
 ::remove the ? we used to let us read all the values
-set ExtraParams=%ExtraParams:?= %
 del %TempFile%
+del %TempConfig%
+set ExtraParams=%ExtraParams:?= %
 echo ExtraParams = OK
 goto ParamsChecked
 )
@@ -234,6 +236,7 @@ echo ExtraParams = NONE
 echo.
 echo.
 ::do Fast Start bypass
+pause
 IF %FastStart%== 1 goto latestSave
 :: Check SaveSelection and goto appropriate choice
 IF %SaveSelection%== 1 (
@@ -1113,7 +1116,7 @@ echo.
 echo ===============================================================================
 echo                                      ABOUT
 echo -------------------------------------------------------------------------------
-echo  Version: v0.1.22
+echo  Version: v0.1.23
 echo  Dated: 17/Apr/2016
 echo  Author: Scott Coxhead
 echo.
@@ -1366,14 +1369,13 @@ echo.
 echo ///////////////////////////////----------------\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 echo.
 
-
 set fvalue=0
 ::If we can't find WinOS then check to see if InstallDir is set
 IF [%option1%]==[WinOS] set /a "fvalue=%fvalue%+1" 
 IF NOT [%InstallDir%]==[0] set /a "fvalue=%fvalue%+2"
 IF %fvalue%== 3 (
 	:: if resetting WinOS and Install dir exists
-	:: check if InstallDir (FactorioDir is the dir with spaces) is correct and exists
+	:: check if InstallDir [FactorioDir is the dir with spaces] is correct and exists
 	IF EXIST "%FactorioDir%" (
 		::if so we can just reset the WinOS value
 		IF EXIST "%FactorioDir%\bin\win32" set value1=win32&&goto resetConfigValue1
@@ -1395,7 +1397,7 @@ IF %fvalue%== 3 (
 	echo -------------------------------------------------------------------------------
 )
 
-if [%option2%]==[] goto resetConfigValue1
+IF [%option2%]==[] goto resetConfigValue1
 :resetConfigValue2
 call :iniWrite %option2% %value2% "%FST_Config%"
 
