@@ -1148,6 +1148,11 @@ IF EXIST mod-list.json (
 	del "%TempFile%"
 )
 
+::savefile date
+pushd "%ServerSaveFolder%"
+for %%a in ("%SaveFile%") do set SaveFileDate=%%~ta
+popd
+
 ::grab port number from config-server.ini
 IF EXIST "%ServerConfig%" (
 	call :iniRead port ServerPort "%ServerConfig%"
@@ -1172,6 +1177,8 @@ echo.
 echo -------------------------------------------------------------------------------
 echo.
 echo  Using save file: %SaveFile%
+echo  Which is dated: %SaveFileDate%
+echo.
 echo  Auto save interval: %AutoSaveTimer% mins                   Auto save slots: %AutoSaveSlots%
 echo  Latency value: %Latency% ms                        Mods loaded: %ModCount%
 echo  Extra Params: %ExtraParams%
@@ -1225,7 +1232,7 @@ goto startServer
 :executeServer
 :: change to factorio dir and start server with chosen save file
 :: increase window size for some easier log viewing
-mode con: cols=80 lines=100
+mode con: cols=80 lines=80
 
 color 84
 call :ascii
