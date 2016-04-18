@@ -1280,15 +1280,15 @@ echo.
 echo -------------------------------------------------------------------------------
 echo                                    GOOD BYE?
 echo -------------------------------------------------------------------------------
-echo  The server has been shutdown, this window will close itself in 10 seconds
+echo  The server has been shutdown.
 echo.
-echo  Unless you wish to [R]eload the script providing you with the options screen
+echo  [R]eload the script, providing you with the options screen again.
 echo.
-echo  [F]astRestart the server, instant with no batch checking, no option changing
+echo  [F]astRestart the server, instant server start, no options.
 echo.
-echo  Or you can simply [Q]uit.
+echo  [Q]uit.
 echo.
-choice /c:RFQ /n /d:Q /t:10 /m "[R]eload, [F]astRestart or [Q]uit"
+choice /c:RFQ /n /m "[R]eload, [F]astRestart or [Q]uit"
 
 IF %ERRORLEVEL%== 1 goto skip
 IF %ERRORLEVEL%== 2 goto executeServer
