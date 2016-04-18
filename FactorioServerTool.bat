@@ -2,7 +2,7 @@
 
 IF %* DEFINED goto help
 setlocal
-:: Factorio Server Tool v0.1.25
+:: Factorio Server Tool v0.1.26
 :: 17/Apr/2016
 :: http://cr4zyb4st4rd.co.uk
 :: https://github.com/Cr4zyy/FactorioServerTool
@@ -937,12 +937,16 @@ call :ascii
 pushd "%ServerSaveFolder%"
 echo -------------------------------------------------------------------------------
 echo  Enter save file name to load
-echo  Showing newest 10 save files
+echo  Showing newest 10 save files, sorted newest ^> oldest
+echo -------------------------------------------------------------------------------
+echo  Date      Time  -- File name
 echo -------------------------------------------------------------------------------
 set n=0
 for /F "delims=" %%S in ('dir "%ServerSaveFolder%\*.zip" /b /o:-d') do (
-  echo %%S
-  set /a "n+=1, 1/(10-n)" 2>nul || goto :break
+	for %%a in (%%S) do (
+		echo %%~ta -- %%~na
+	)
+	set /a "n+=1, 1/(10-n)" 2>nul || goto :break
 )
 :break
 echo -------------------------------------------------------------------------------
@@ -951,8 +955,8 @@ echo  If you want to load the newest save leave the input blank.
 echo -------------------------------------------------------------------------------
 echo.
 set /p SelectedSave=
-
 IF "%SelectedSave%"=="" goto latestSave
+
 ::if a save file has spaces in it, it can't be used
 IF [%SelectedSave%]==[%SelectedSave: =%] (
 	echo.
@@ -999,11 +1003,15 @@ call :ascii
 pushd "%StandardSaveFolder%"
 echo -------------------------------------------------------------------------------
 echo  Enter save file name to load
-echo  Showing newest 10 Single Player save files
+echo  Showing newest 10 Single Player save files, sorted newest ^> oldest
+echo -------------------------------------------------------------------------------
+echo  Date      Time  -- File name
 echo -------------------------------------------------------------------------------
 set ns=0
 for /F "delims=" %%S in ('dir "%StandardSaveFolder%\*.zip" /b /o:-d') do (
-  echo %%S
+	for %%a in (%%S) do (
+		echo %%~ta -- %%~na
+	)
   set /a "ns+=1, 1/(10-ns)" 2>nul || goto :break1
 )
 :break1
@@ -1117,7 +1125,7 @@ echo.
 echo ===============================================================================
 echo                                      ABOUT
 echo -------------------------------------------------------------------------------
-echo  Version: v0.1.25
+echo  Version: v0.1.26
 echo  Dated: 17/Apr/2016
 echo  Author: Scott Coxhead
 echo.
