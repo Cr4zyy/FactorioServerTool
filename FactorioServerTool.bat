@@ -1,9 +1,7 @@
 @echo off 
-
-IF %* DEFINED goto help
 setlocal
-:: Factorio Server Tool v0.1.26
-:: 17/Apr/2016
+:: Factorio Server Tool v0.1.27
+:: 19/Apr/2016
 :: http://cr4zyb4st4rd.co.uk
 :: https://github.com/Cr4zyy/FactorioServerTool
 
@@ -22,7 +20,7 @@ echo  .dP"Y8 888888 88""Yb Yb    dP 888888 88""Yb     888888  dP"Yb   dP"Yb  88
 echo  `Ybo." 88__   88__dP  Yb  dP  88__   88__dP       88   dP   Yb dP   Yb 88     
 echo  o.`Y8b 88""   88"Yb    YbdP   88""   88"Yb        88   Yb   dP Yb   dP 88  .o 
 echo  8bodP' 888888 88  Yb    YP    888888 88  Yb       88    YbodP   YbodP  88ood8 
-echo -------------------------------- Made by Cr4zy --------------------------------
+echo -------------------------------------------------------------------------------
 echo _______________________________________________________________________________
 echo.
 goto:eof
@@ -82,6 +80,7 @@ cls
 ::variables
 set BatchDir=%~dp0
 set FSTbat=%~f0
+
 ::FactorioServerTool files
 ::Even if user doesnt use %appdata% write our temp/config because we can write there easily
 set FST_Config=%appdata%\Factorio\FST_Config.ini
@@ -90,6 +89,11 @@ set FacAppdata=%appdata%\Factorio
 set TempFile=%appdata%\Factorio\temp.tmp
 set writeTemp=%appdata%\Factorio\writeTemp.tmp
 set TempLib=%appdata%\Factorio\TempLib.tmp
+
+::If a user wants they can store the .ini in the same place as the batchfile this is a check for that.
+IF EXIST "%BatchDir%FST_Config.ini" (
+	set FST_Config=%BatchDir%FST_Config.ini
+)
 
 :: Default FST settings/options
 :: Used incase of resets etc
@@ -943,7 +947,7 @@ echo  Date      Time  -- File name
 echo -------------------------------------------------------------------------------
 set n=0
 for /F "delims=" %%S in ('dir "%ServerSaveFolder%\*.zip" /b /o:-d') do (
-	for %%a in (%%S) do (
+	for %%a in ("%%S") do (
 		echo %%~ta -- %%~na
 	)
 	set /a "n+=1, 1/(10-n)" 2>nul || goto :break
@@ -955,16 +959,10 @@ echo  If you want to load the newest save leave the input blank.
 echo -------------------------------------------------------------------------------
 echo.
 set /p SelectedSave=
+::remove quotes from autocompleted entries if they contain spaces
+set SelectedSave=%SelectedSave:"=%
 IF "%SelectedSave%"=="" goto latestSave
 
-::if a save file has spaces in it, it can't be used
-IF [%SelectedSave%]==[%SelectedSave: =%] (
-	echo.
-) else (
-	echo  Save files can not contain spaces in their names, please rename and continue
-	pause
-	goto enterSave
-)
 IF EXIST "%ServerSaveFolder%\%SelectedSave%" (
 	set SaveFile=%SelectedSave%
 	goto startServer
@@ -979,21 +977,16 @@ IF EXIST "%ServerSaveFolder%\%SelectedSave%" (
 
 :latestSave
 ::for launching with the newest save file
-for /F "delims=" %%I in ('dir "%ServerSaveFolder%\*.zip" /b /od') do set SaveFile=%%I
+for /F "delims=" %%I in ('dir "%ServerSaveFolder%\*.zip" /b /od') do set SaveFile=%%~I
+set SaveFile=%SaveFile:"=%
+
 echo -------------------------------------------------------------------------------
 echo  Starting server with newest found save file
 echo  '%SaveFile%'
 echo -------------------------------------------------------------------------------
-IF [%SaveFile%]==[%SaveFile: =%] (
-	echo.
-) else (
-	echo  The latest save file name contains a space.
-	echo  Save files can not contain spaces in their names, please rename and continue
-	pause
-	goto enterSave
-)
+
 ::IF DEFINED somevariable echo Value exists
-IF [%SaveFile%]==[] set failed=Could not detect any save files you might need to run this as an administrator  Or create a new save file below&& call :errorEnd 1
+IF "%SaveFile%"=="" set failed=Could not detect any save files you might need to run this as an administrator  Or create a new save file below&& call :errorEnd 1
 IF %FastStart%== 1 goto executeServer
 goto startServer
 
@@ -1009,7 +1002,7 @@ echo  Date      Time  -- File name
 echo -------------------------------------------------------------------------------
 set ns=0
 for /F "delims=" %%S in ('dir "%StandardSaveFolder%\*.zip" /b /o:-d') do (
-	for %%a in (%%S) do (
+	for %%a in ("%%S") do (
 		echo %%~ta -- %%~na
 	)
   set /a "ns+=1, 1/(10-ns)" 2>nul || goto :break1
@@ -1023,14 +1016,8 @@ echo ---------------------------------------------------------------------------
 echo.
 set /p SelectedSPSave=
 popd
+set SelectedSPSave=%SelectedSPSave:"=%
 IF "%SelectedSPSave%"=="" goto latestSPSave
-IF [%SelectedSPSave%]==[%SelectedSPSave: =%] (
-	echo.
-) else (
-	echo  Save files can not contain spaces in their names, please rename and continue
-	pause
-	goto selectSPSave
-)
 
 IF EXIST "%StandardSaveFolder%\%SelectedSPSave%" (
 	set SaveFile=%SelectedSPSave%
@@ -1045,6 +1032,7 @@ IF EXIST "%StandardSaveFolder%\%SelectedSPSave%" (
 )
 
 :copySave
+set SaveFileName=%SaveFileName:"=%
 set SaveFileName=%SaveFile:~0,-4%
 
 ::append datetime to the filename to avoid conflicts
@@ -1065,19 +1053,12 @@ for /F "delims=" %%G in ('dir "%StandardSaveFolder%\*.zip" /b /od') do (
 	set LatestSPext=%%~xG
 )
 
-IF [%LatestSP%]==[%LatestSP%: =%] (
-	echo.
-) else (
-	echo  The latest save file name contains a space.
-	echo  Save files can not contain spaces in their names, please rename and continue.
-	pause
-	goto selectSPSave
-)
+set LatestSP=%LatestSP:"=%
 
 ::append datetime to the filename to avoid conflicts
 call :getDateTime
 set newSaveName=%LatestSP%_%dateTime%%LatestSPext%
-IF [%newSaveName%]==[] set failed=Could not detect any save files you might need to run this as an administrator Or create a new save file below&& call :errorEnd 1
+IF "%newSaveName%"=="" set failed=Could not detect any save files you might need to run this as an administrator Or create a new save file below&& call :errorEnd 1
 echo.
 echo -------------------------------------------------------------------------------
 echo  Latest SP save file is: '%LatestSP%%LatestSPext%'
@@ -1087,14 +1068,13 @@ echo.
 copy /y "%StandardSaveFolder%\%LatestSP%%LatestSPext%" "%ServerSaveFolder%\%newSaveName%"
 set SaveFile=%newSaveName%
 
-IF [%SaveFile%]==[] set set failed=Could not detect any save files you might need to run this as an administrator Or create a new save file below&& call :errorEnd 1
+IF "%SaveFile%"=="" set set failed=Could not detect any save files you might need to run this as an administrator Or create a new save file below&& call :errorEnd 1
 
 goto startServer
 
 :aboutThis
 cls
 call :ascii
-echo ===============================================================================
 echo                                      INFO
 echo -------------------------------------------------------------------------------
 echo.
@@ -1107,11 +1087,14 @@ echo  resulting from any defect, error or failure to perform.
 echo  Or for making it so easy to host a server you can't stop playing the game.
 echo.
 echo ===============================================================================
-echo                Extra commands you can add in FST_Config.ini
+echo                 FST_Config.ini location and additional options
 echo -------------------------------------------------------------------------------
 echo.
 echo  Stores its own config file containing config options in:
 echo  %FST_Config%
+echo  You can store the config file in the same location as the batch file
+echo  To do so, either copy from your appdata listed above or create a new empty
+echo  file names FST_Config.ini where your FactorioServerTool.bat is stored.
 echo.
 echo  You can add FastStart=1 to the config file to skip the Options screen
 echo  and always begin the server straight away with the newest savefile.
@@ -1125,15 +1108,15 @@ echo.
 echo ===============================================================================
 echo                                      ABOUT
 echo -------------------------------------------------------------------------------
-echo  Version: v0.1.26
-echo  Dated: 17/Apr/2016
+echo  Version: v0.1.27
+echo  Dated: 19/Apr/2016
 echo  Author: Scott Coxhead
 echo.
 echo  Github: github.com/Cr4zyy/FactorioServerTool/
 echo.
 echo  Probably a script mess but it seems to work, for me. ^:D Hope it works for you.
 echo.
-echo -------------------------------------------------------------------------------
+echo ===============================================================================
 echo                                Select an option:
 echo -------------------------------------------------------------------------------
 choice /c:CGB /n /m ">Open [C]onfig file, go to [G]ithub or go [B]ack to options"
@@ -1266,7 +1249,7 @@ timeout 2
 echo.
 color 08
 pushd "%FactorioDir%"
-start /wait bin\%WinOS%\Factorio.exe --start-server %SaveFile% --autosave-interval %AutoSaveTimer% --autosave-slots %AutoSaveSlots% --latency-ms %Latency% -c "%ServerConfig%" %ExtraParams%&&timeout 2&&popd&&color 07&&call :restartScript
+start /wait bin\%WinOS%\Factorio.exe --start-server "%SaveFile%" --autosave-interval %AutoSaveTimer% --autosave-slots %AutoSaveSlots% --latency-ms %Latency% -c "%ServerConfig%" %ExtraParams%&&timeout 2&&popd&&color 07&&call :restartScript
 goto end
 
 :restartScript
