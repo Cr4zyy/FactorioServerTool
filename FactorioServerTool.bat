@@ -1278,7 +1278,7 @@ timeout 2
 echo.
 color 08
 pushd "%FactorioDir%"
-start /wait bin\%WinOS%\Factorio.exe --start-server "%SaveFile%" --autosave-interval %AutoSaveTimer% --autosave-slots %AutoSaveSlots% --latency-ms %Latency% -c "%ServerConfig%" %ExtraParams%&&timeout 2&&popd&&color 07&&call :restartScript
+start /wait bin\%WinOS%\Factorio.exe --start-server "%SaveFile%" --autosave-interval %AutoSaveTimer% --autosave-slots %AutoSaveSlots% --latency-ms %Latency% -c "%ServerConfig%" %ExtraParams%&&timeout 2&&popd&&call :restartScript
 goto end
 
 :restartScript
@@ -1286,6 +1286,9 @@ goto end
 mode con: cols=80 lines=60
 ::prettyness
 color 30
+::reset this incase we set it for latest save fast restart
+set FastStart=0
+
 cls
 call :ascii
 echo.
@@ -1296,15 +1299,18 @@ echo  The server has been shutdown.
 echo.
 echo  [R]eload the script, providing you with the options screen again.
 echo.
-echo  [F]astRestart the server, instant server start, no options.
+echo  [F]ast Restart the server, instant server start, no options.
+echo.
+echo  [L]ast Save Restart, as above, but with the newest save file.
 echo.
 echo  [Q]uit.
 echo.
-choice /c:RFQ /n /m "[R]eload, [F]astRestart or [Q]uit"
+choice /c:RFLQ /n /m "> [R]eload, [F]ast Restart, [L]ast Save Restart or [Q]uit"
 
 IF %ERRORLEVEL%== 1 goto skip
 IF %ERRORLEVEL%== 2 goto executeServer
-IF %ERRORLEVEL%== 3 echo ----------------------------------QUITTING-------------------------------------
+IF %ERRORLEVEL%== 3 set FastStart=1&& goto latestSave
+IF %ERRORLEVEL%== 4 echo ----------------------------------QUITTING-------------------------------------
 cd /d %BatchDir%
 goto quickend
 
