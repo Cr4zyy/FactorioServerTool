@@ -1,7 +1,7 @@
 @echo off 
 setlocal
-:: Factorio Server Tool v0.1.27
-:: 19/Apr/2016
+:: Factorio Server Tool v0.1.28
+:: 21/Apr/2016
 :: http://cr4zyb4st4rd.co.uk
 :: https://github.com/Cr4zyy/FactorioServerTool
 
@@ -254,9 +254,38 @@ IF %SaveSelection%== 1 (
 :setupBatch
 :: Begin server setup enter install dir
 ::look for factorio first
+cls
 call :ascii
+echo ------------------------------------------------------------------------------  
+echo                       Welcome to the Factorio Server Tool
+echo ------------------------------------------------------------------------------  
+echo.
+echo  Select where to save the config file for FST. 'FST_Config.ini'
+echo  Either the Appdata folder or the same directory as the FactorioServerTool.bat
+echo.
+echo  Appdata:
+echo  %FacAppdata%
+echo.
+echo  or Same Directory:
+echo  %BatchDir%
+echo.
+echo  By default FST will use the ini located in the same directory
+echo.
+echo  However you can move the files between the appdata folder 
+echo  and the batch directory as you like.
+echo ------------------------------------------------------------------------------  
+echo.
+choice /c:AS /n /m ">Use [A]ppdata folder or the [S]ame directory as FactorioServerTool.bat"
 
+IF %ERRORLEVEL%== 1 set FST_Config=%appdata%\Factorio\FST_Config.ini
+IF %ERRORLEVEL%== 2 set FST_Config=%BatchDir%FST_Config.ini
+
+echo ------------------------------------------------------------------------------
+echo  Now attempting to find your Steam directory
+echo  If you don't use Steam you will be prompted to input your Install dir after.
+echo ------------------------------------------------------------------------------
 echo  Locating Steam Directory...
+
 FOR /f "tokens=1,2*" %%E in ('reg query HKEY_CURRENT_USER\Software\Valve\Steam\') do if %%E==SteamPath set SteamDir=%%G
 :: if nothing then go to input
 IF ["%SteamDir%"]==[] echo No Steam Install found && goto inputLocation
@@ -1090,11 +1119,11 @@ echo ===========================================================================
 echo                 FST_Config.ini location and additional options
 echo -------------------------------------------------------------------------------
 echo.
-echo  Stores its own config file containing config options in:
+echo  Stores its config file containing config options in:
 echo  %FST_Config%
-echo  You can store the config file in the same location as the batch file
-echo  To do so, either copy from your appdata listed above or create a new empty
-echo  file names FST_Config.ini where your FactorioServerTool.bat is stored.
+echo  You can if you wish move this file between the appdata folder and the
+echo  batch file directory, do note that if one is loscated in the same directory
+echo  as the batch file, that will be the one used for the config options.
 echo.
 echo  You can add FastStart=1 to the config file to skip the Options screen
 echo  and always begin the server straight away with the newest savefile.
@@ -1108,8 +1137,8 @@ echo.
 echo ===============================================================================
 echo                                      ABOUT
 echo -------------------------------------------------------------------------------
-echo  Version: v0.1.27
-echo  Dated: 19/Apr/2016
+echo  Version: v0.1.28
+echo  Dated: 21/Apr/2016
 echo  Author: Scott Coxhead
 echo.
 echo  Github: github.com/Cr4zyy/FactorioServerTool/
