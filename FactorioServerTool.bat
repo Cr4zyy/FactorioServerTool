@@ -948,11 +948,12 @@ IF %ERRORLEVEL%== 2 set SaveSel=1&& goto writeConfig
 
 
 :resetSaveSelect
+title Factorio Server Tool [ Setup Default Save ]
 cls
 call :ascii
 echo.
 echo -------------------------------------------------------------------------------
-echo  Select newest server savefile for launch by default? ^(Y^)
+echo  Select the newest server savefile for launch by default? ^(Y^)
 echo  or ^(N^) open the savefile selection menu each launch.
 echo  ^(Y^) is a faster method
 echo -------------------------------------------------------------------------------
