@@ -530,7 +530,7 @@ echo ---------------------------------------------------------------------------
 echo.
 choice /c:YN /n /m ">Would you like to create the server folders? [Y/N]"
 IF %ERRORLEVEL%== 1 goto createServerDir
-IF %ERRORLEVEL%== 2 set failed=You opted to not create server files!   Without them this tool can not operate&& call :errorEnd 0
+IF %ERRORLEVEL%== 2 set failed=You opted to not create server files! Without them this tool can not operate&& call :errorEnd 0
 
 
 :createServerDir
@@ -605,7 +605,7 @@ IF %SPSaves%== 1 xcopy /s /e /y "%StandardSaveFolder%" "%ServerSaveFolder%"
 timeout 2
 cls
 
-set failed=Failed to create the server files^(s^) and^/or folder^(s^)   This tool may need to be run as an administrator ^(right-click^) it to do so
+set failed=Failed to create the server files^(s^) and^/or folder^(s^) This tool may need to be run as an administrator ^(right-click^) it to do so
 IF EXIST "%ServerSaveFolder%" (
 	call :ascii
 	goto configSetup
@@ -1053,7 +1053,7 @@ echo  '%SaveFile%'
 echo -------------------------------------------------------------------------------
 
 ::IF DEFINED somevariable echo Value exists
-IF "%SaveFile%"=="" set failed=Could not detect any save files you might need to run this as an administrator  Or create a new save file below&& call :errorEnd 1
+IF "%SaveFile%"=="" set failed=Could not detect any save files you might need to run this as an administrator or create a new save file below&& call :errorEnd 1
 IF %FastStart%== 1 goto executeServer
 goto startServer
 
