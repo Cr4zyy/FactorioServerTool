@@ -1,7 +1,7 @@
 @echo off 
 setlocal
-:: Factorio Server Tool v0.1.28
-:: 21/Apr/2016
+:: Factorio Server Tool v0.1.29
+:: 22/Apr/2016
 :: http://cr4zyb4st4rd.co.uk
 :: https://github.com/Cr4zyy/FactorioServerTool
 
@@ -60,7 +60,7 @@ goto:eof
 ::Read the values from the ini config
 :iniRead
 ::pushd to make sure we write these files to appdata where we can write
-pushd "%FacAppdata%"
+pushd "%FacTemp%"
 find "%1=" %3 | sort /r | date | find "=" > en#er.bat
 echo set %2=%%6> enter.bat
 call en#er.bat
@@ -69,10 +69,12 @@ popd
 goto:eof
 
 :skip
+set vnumber=0.1.29
 ::scale cmd to fit nicely
 mode con: cols=80 lines=60
 ::prettyness
 color 30
+title Factorio Server Tool %vnumber%
 ::grab and store ip because it echos annoying stuff
 for /f "skip=4 usebackq tokens=2" %%a in (`nslookup myip.opendns.com resolver1.opendns.com`) do set CurrIP=%%a
 cls
@@ -82,17 +84,42 @@ set BatchDir=%~dp0
 set FSTbat=%~f0
 
 ::FactorioServerTool files
-::Even if user doesnt use %appdata% write our temp/config because we can write there easily
 set FST_Config=%appdata%\Factorio\FST_Config.ini
-set TempConfig=%appdata%\Factorio\config-temp.tmp
 set FacAppdata=%appdata%\Factorio
-set TempFile=%appdata%\Factorio\temp.tmp
-set writeTemp=%appdata%\Factorio\writeTemp.tmp
-set TempLib=%appdata%\Factorio\TempLib.tmp
-
-::If a user wants they can store the .ini in the same place as the batchfile this is a check for that.
-IF EXIST "%BatchDir%FST_Config.ini" (
-	set FST_Config=%BatchDir%FST_Config.ini
+::If a user wants they can store the config.ini in the same place as the batchfile this is a check for that.
+IF EXIST "%BatchDir%\FST_Config.ini" (
+	set FST_Config=%BatchDir%\FST_Config.ini
+)
+::Try to create temp files in %temp%, if that fails try %appdata%, if that fails error
+IF NOT EXIST "%temp%\Factorio" (
+	mkdir "%temp%\Factorio"
+	IF %ERRORLEVEL%== 1 (
+		IF NOT EXIST "%appdata%\Factorio" (
+			mkdir "%appdata%\Factorio"
+			IF %ERRORLEVEL%== 1 (
+				set failed=The tool could not create a temporary folder in either your temp or appdata folders, please try running the tool as an administrator to gain permissions.
+				goto errorEnd
+			) else (
+				set FacTemp=%appdata%\Factorio
+				set TempConfig=%appdata%\Factorio\config-temp.tmp
+				set TempFile=%appdata%\Factorio\temp.tmp
+				set writeTemp=%appdata%\Factorio\writeTemp.tmp
+				set TempLib=%appdata%\Factorio\TempLib.tmp
+			)
+		)
+	) else (
+		set FacTemp=%temp%\Factorio
+		set TempConfig=%temp%\Factorio\config-temp.tmp
+		set TempFile=%temp%\Factorio\temp.tmp
+		set writeTemp=%temp%\Factorio\writeTemp.tmp
+		set TempLib=%temp%\Factorio\TempLib.tmp
+	)		
+) else (
+	set FacTemp=%temp%\Factorio
+	set TempConfig=%temp%\Factorio\config-temp.tmp
+	set TempFile=%temp%\Factorio\temp.tmp
+	set writeTemp=%temp%\Factorio\writeTemp.tmp
+	set TempLib=%temp%\Factorio\TempLib.tmp
 )
 
 :: Default FST settings/options
@@ -254,6 +281,7 @@ IF %SaveSelection%== 1 (
 :setupBatch
 :: Begin server setup enter install dir
 ::look for factorio first
+title Factorio Server Tool [ Setup Wizard ]
 cls
 call :ascii
 echo ------------------------------------------------------------------------------  
@@ -269,16 +297,19 @@ echo.
 echo  or Same Directory:
 echo  %BatchDir%
 echo.
-echo  By default FST will use the ini located in the same directory
+echo  You can move the ini file between the appdata folder and the batch directory
 echo.
-echo  However you can move the files between the appdata folder 
-echo  and the batch directory as you like.
+echo  However if a ini exists in the same directory it will be the file used
+echo.
 echo ------------------------------------------------------------------------------  
 echo.
 choice /c:AS /n /m ">Use [A]ppdata folder or the [S]ame directory as FactorioServerTool.bat"
 
 IF %ERRORLEVEL%== 1 set FST_Config=%appdata%\Factorio\FST_Config.ini
 IF %ERRORLEVEL%== 2 set FST_Config=%BatchDir%FST_Config.ini
+
+cls 
+call :ascii
 
 echo ------------------------------------------------------------------------------
 echo  Now attempting to find your Steam directory
@@ -335,7 +366,7 @@ IF EXIST %SteamDir%\steamapps\libraryfolders.vdf (
 	:break2
 	::library dir only have \\ in them this way we can ignore other lines in the file
 	::also findstr sucks and hates spaces in directories so pushd
-	pushd "%FacAppdata%"
+	pushd "%FacTemp%"
 	for /f "tokens=2" %%d in ('findstr "\\" "Temp.tmp"') do call :processDir %%d
 	del Temp.tmp
 	popd
@@ -477,7 +508,7 @@ IF EXIST "%FacData%" (
 echo ------------------------------------------------------------------------------  
 echo  Could not locate Factorio data folders.
 echo ------------------------------------------------------------------------------  
-set failed=No Factorio Appdata folder was found, you need to launch the game to create appdata
+set failed=No Factorio data folder was found, you need to launch the game to create these files.
 call :errorEnd 0
 
 :saveData
@@ -677,6 +708,7 @@ del "%TempFile%"
 set ChangePortNumber=0
 
 :pickPort
+title Factorio Server Tool [ Setup Port ]
 cls
 call :ascii
 :pickPortcls
@@ -737,6 +769,7 @@ IF %ChangePortNumber%== 0  goto setSaveTimer
 IF %ChangePortNumber%== 1  goto startServer
 
 :setSaveTimer
+title Factorio Server Tool [ Setup Autosave ]
 cls
 call :ascii
 :setSaveTimercls
@@ -791,6 +824,7 @@ IF %ChangeSaveInterval%== 1 (
 )
 
 :setSaveSlots
+title Factorio Server Tool [ Setup Autosave ]
 cls
 call :ascii
 :setSaveSlotscls
@@ -845,6 +879,7 @@ IF %ChangeSaveInterval%==1 (
 )
 
 :setLatency
+title Factorio Server Tool [ Setup Latency ]
 cls
 call :ascii
 :setLatencycls
@@ -938,6 +973,7 @@ call :iniWrite SaveSelection %SaveSel% "%FST_Config%"
 goto startServer
 
 :writeConfig
+title Factorio Server Tool [ Writing Config ]
 ::before we start the server we need to save our config
 ::write choices to ini
 echo -------------------------------------------------------------------------------
@@ -964,6 +1000,7 @@ IF %SaveSel%== 0 goto latestSave
 IF %SaveSel%== 1 goto enterSave
 
 :enterSave
+title Factorio Server Tool [ Pick Save File ]
 cls
 call :ascii
 ::for launching with user defined save
@@ -1020,6 +1057,7 @@ IF %FastStart%== 1 goto executeServer
 goto startServer
 
 :selectSPSave
+title Factorio Server Tool [ Pick Save File ]
 cls
 call :ascii
 pushd "%StandardSaveFolder%"
@@ -1102,6 +1140,7 @@ IF "%SaveFile%"=="" set set failed=Could not detect any save files you might nee
 goto startServer
 
 :aboutThis
+title Factorio Server Tool [ About ]
 cls
 call :ascii
 echo                                      INFO
@@ -1137,8 +1176,8 @@ echo.
 echo ===============================================================================
 echo                                      ABOUT
 echo -------------------------------------------------------------------------------
-echo  Version: v0.1.28
-echo  Dated: 21/Apr/2016
+echo  Version: v%vnumber%
+echo  Dated: 22/Apr/2016
 echo  Author: Scott Coxhead
 echo.
 echo  Github: github.com/Cr4zyy/FactorioServerTool/
@@ -1155,6 +1194,7 @@ IF %ERRORLEVEL%== 2 start http://github.com/Cr4zyy/FactorioServerTool/
 IF %ERRORLEVEL%== 3 goto startServer
 
 :startServer
+title Factorio Server Tool [ Options ]
 cls
 ::mod counter (or close enough)
 pushd "%ServerModFolder%"
@@ -1253,7 +1293,7 @@ goto startServer
 :: change to factorio dir and start server with chosen save file
 :: increase window size for some easier log viewing
 mode con: cols=80 lines=80
-
+title Factorio Server Tool [ Server Starting ]
 color 84
 call :ascii
 echo \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\-----\----/-----////////////////////////////////
@@ -1278,6 +1318,7 @@ timeout 2
 echo.
 color 08
 pushd "%FactorioDir%"
+title Factorio Server Tool [ Server Running - CTRL+C to quit ]
 start /wait bin\%WinOS%\Factorio.exe --start-server "%SaveFile%" --autosave-interval %AutoSaveTimer% --autosave-slots %AutoSaveSlots% --latency-ms %Latency% -c "%ServerConfig%" %ExtraParams%&&timeout 2&&popd&&call :restartScript
 goto end
 
@@ -1286,6 +1327,7 @@ goto end
 mode con: cols=80 lines=60
 ::prettyness
 color 30
+title Factorio Server Tool [ Server Shutdown ]
 ::reset this incase we set it for latest save fast restart
 set FastStart=0
 
@@ -1339,6 +1381,7 @@ echo.
 goto:eof
 
 :errorEnd
+title Factorio Server Tool [ ERROR ]
 cls
 call :ascii
 color 4f
@@ -1356,6 +1399,7 @@ echo ----------------------------------QUITTING---------------------------------
 goto end
 
 :errorNewSave
+title Factorio Server Tool [ ERROR - Create a save ]
 echo.
 echo  You can [C]reate a new savefile below
 echo  This save will be the newest file for the next run
@@ -1389,6 +1433,7 @@ pause
 goto end
 
 :errorFix
+title Factorio Server Tool [ ERROR - Attempted a fix ]
 set option1=%1
 set value1=%2
 set option2=%3
