@@ -1136,7 +1136,7 @@ echo.
 copy /y "%StandardSaveFolder%\%LatestSP%%LatestSPext%" "%ServerSaveFolder%\%newSaveName%"
 set SaveFile=%newSaveName%
 
-IF "%SaveFile%"=="" set set failed=Could not detect any save files you might need to run this as an administrator Or create a new save file below&& call :errorEnd 1
+IF "%SaveFile%"=="" set failed=Could not detect any save files you might need to run this as an administrator or create a new save file below&& call :errorEnd 1
 
 goto startServer
 
