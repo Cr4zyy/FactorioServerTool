@@ -1191,7 +1191,9 @@ echo ---------------------------------------------------------------------------
 choice /c:CGB /n /m ">Open [C]onfig file, go to [G]ithub or go [B]ack to options"
 
 IF %ERRORLEVEL%== 1 "%FST_Config%"
+goto aboutThis
 IF %ERRORLEVEL%== 2 start http://github.com/Cr4zyy/FactorioServerTool/
+goto aboutThis
 IF %ERRORLEVEL%== 3 goto startServer
 
 :startServer
