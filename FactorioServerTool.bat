@@ -718,7 +718,6 @@ IF NOT EXIST "%DefaultConfig%" goto creatingConfigFail
 :creatingConfig	
 echo -------------------------------------------------------------------------------
 echo  Creating config.ini backup
-pause
 copy  "%DefaultConfig%" "%FacCfg%\config-backup.ini"
 echo  Creating config-server.ini
 copy  "%DefaultConfig%" "%ServerConfig%"
@@ -726,10 +725,9 @@ echo ---------------------------------------------------------------------------
 goto writeServerConfig
 
 :creatingConfigFail
-set failed=Could not locate a config.ini you need to start the game to create this file! If you have started the game, the file couldn't be found in:  %FacCfg%
+set failed=Could not locate a config.ini you need to start the game to create this file! If you have started the game, the file couldn't be found in: %FacCfg%
 call :errorEnd 0
 
-pause
 :writeServerConfig
 ::modify save locations for server
 call :iniRead read-data CurReadData "%ServerConfig%"
