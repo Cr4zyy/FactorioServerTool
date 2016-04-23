@@ -464,6 +464,7 @@ IF %ERRORLEVEL%== 2 goto inputLocation
 :inputLocation
 cls
 call :ascii
+:inputLocationCLS
 echo ------------------------------------------------------------------------------  
 echo  Please enter the main Factorio Install Directory
 echo.
@@ -479,7 +480,7 @@ set WinOS=
 IF EXIST "%InstallDir%\bin\win32" set WinOS=win32
 IF EXIST "%InstallDir%\bin\x64" set WinOS=x64
 
-IF NOT EXIST "%InstallDir%\bin\%WinOS%\Factorio.exe" echo  No Factorio.exe located, please make sure Factorio is installed.&& goto inputLocation
+IF NOT EXIST "%InstallDir%\bin\%WinOS%\Factorio.exe" echo  No Factorio.exe located, please make sure Factorio is installed.&& goto inputLocationCLS
 
 choice /c:YN /n /m ">Is the directory - '%InstallDir%' correct? [Y/N]"
 
@@ -716,12 +717,13 @@ IF EXIST "%DefaultConfig%" goto creatingConfig
 IF NOT EXIST "%DefaultConfig%" goto creatingConfigFail
 
 :creatingConfig	
+call :clearEL
 echo -------------------------------------------------------------------------------
 echo  Creating config.ini backup
-copy  "%DefaultConfig%" "%FacCfg%\config-backup.ini"
+copy /y "%DefaultConfig%" "%FacCfg%\config-backup.ini" 
 echo  Creating config-server.ini
-copy  "%DefaultConfig%" "%ServerConfig%"
 echo -------------------------------------------------------------------------------
+IF ERRORLEVEL 1 set failed=Could not write config-backup.ini/config-server.ini Make sure you have permission, you may need to run this tool as an admin ^(right-click run as admin^)  Attempted to write files to: %FacCfg%&& call :errorEnd 0
 goto writeServerConfig
 
 :creatingConfigFail
