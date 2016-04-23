@@ -68,6 +68,10 @@ del en?er.bat > nul
 popd
 goto:eof
 
+::sets errorlevel to 0 properly
+:clearEL
+exit /b 0
+
 :skip
 set vnumber=0.1.29
 ::scale cmd to fit nicely
@@ -93,10 +97,10 @@ IF EXIST "%BatchDir%\FST_Config.ini" (
 ::Try to create temp files in %temp%, if that fails try %appdata%, if that fails error
 IF NOT EXIST "%temp%\Factorio" (
 	mkdir "%temp%\Factorio"
-	IF %ERRORLEVEL%== 1 (
+	IF ERRORLEVEL== 1 (
 		IF NOT EXIST "%appdata%\Factorio" (
 			mkdir "%appdata%\Factorio"
-			IF %ERRORLEVEL%== 1 (
+			IF ERRORLEVEL== 1 (
 				set failed=The tool could not create a temporary folder in either your temp or appdata folders, please try running the tool as an administrator to gain permissions.
 				goto errorEnd
 			) else (
@@ -279,6 +283,7 @@ IF %SaveSelection%== 1 (
 )
 
 :setupBatch
+call :clearEL
 :: Begin server setup enter install dir
 ::look for factorio first
 title Factorio Server Tool [ Setup Wizard ]
@@ -303,14 +308,47 @@ echo  However if a ini exists in the same directory it will be the file used
 echo.
 echo ------------------------------------------------------------------------------  
 echo.
-choice /c:AS /n /m ">Use [A]ppdata folder or the [S]ame directory as FactorioServerTool.bat"
+choice /c:NAS /n /m ">Use [A]ppdata folder or the [S]ame directory as FactorioServerTool.bat"
 
-IF %ERRORLEVEL%== 1 set FST_Config=%appdata%\Factorio\FST_Config.ini
-IF %ERRORLEVEL%== 2 set FST_Config=%BatchDir%FST_Config.ini
+IF %ERRORLEVEL%== 1 goto setupBatch
+IF %ERRORLEVEL%== 2 set FST_Config=%appdata%\Factorio\FST_Config.ini&& set FST_Dir=%appdata%\Factorio
+IF %ERRORLEVEL%== 3 set FST_Config=%BatchDir%FST_Config.ini&& set FST_Dir=%BatchDir%
+
+call :clearEL
+
+IF NOT EXIST "%FST_Dir%" (
+	mkdir "%FST_Dir%"
+	IF ERRORLEVEL== 1 (
+		echo.
+		echo  ERROR!
+		echo.
+		echo  The tool could not create the directory in the location you have selected
+		echo  Please either choose the other directory option, run the tool as an admin
+		echo  ^(right-click run as admin^) or change the location you are running the 
+		echo  FactorioServerTool.bat from.
+		echo.
+		pause
+		goto setupBatch
+	)
+)
+IF NOT EXIST "%FST_Config%" (
+	copy NUL "%FST_Config%"
+	IF ERRORLEVEL== 1 (
+		echo.
+		echo  ERROR!
+		echo.
+		echo  The tool could not create the 'FST_Config.ini' in the location you have 
+		echo  selected, this is probably due to permission issues, either select the
+		echo  other location provided, run the tool as an admin ^(right-click run as admin^) 
+		echo  or change the location you are running the FactorioServerTool.bat from.
+		echo.
+		pause
+		goto setupBatch
+	)
+)
 
 cls 
 call :ascii
-
 echo ------------------------------------------------------------------------------
 echo  Now attempting to find your Steam directory
 echo  If you don't use Steam you will be prompted to input your Install dir after.
@@ -674,18 +712,25 @@ IF %ERRORLEVEL%== 2 goto useAnotherConfig
 
 :configServerData
 ::save configs and make new ones and a backup
-IF EXIST "%DefaultConfig%" (
-	echo -------------------------------------------------------------------------------
-	echo  Creating config.ini backup
-	copy  "%DefaultConfig%" "%FacCfg%\config-backup.ini"
-	echo  Creating config-server.ini
-	copy  "%DefaultConfig%" "%ServerConfig%"
-	echo -------------------------------------------------------------------------------
-) else (
-	set failed=Could not locate a config.ini you need to start the game to create this file! If you have started the game, the file couldn't be found in:  %FacCfg%
-	call :errorEnd 0
-)
+IF EXIST "%DefaultConfig%" goto creatingConfig
+IF NOT EXIST "%DefaultConfig%" goto creatingConfigFail
 
+:creatingConfig	
+echo -------------------------------------------------------------------------------
+echo  Creating config.ini backup
+pause
+copy  "%DefaultConfig%" "%FacCfg%\config-backup.ini"
+echo  Creating config-server.ini
+copy  "%DefaultConfig%" "%ServerConfig%"
+echo -------------------------------------------------------------------------------
+goto writeServerConfig
+
+:creatingConfigFail
+set failed=Could not locate a config.ini you need to start the game to create this file! If you have started the game, the file couldn't be found in:  %FacCfg%
+call :errorEnd 0
+
+pause
+:writeServerConfig
 ::modify save locations for server
 call :iniRead read-data CurReadData "%ServerConfig%"
 call :iniRead write-data CurWriteData "%ServerConfig%"
@@ -978,11 +1023,9 @@ title Factorio Server Tool [ Writing Config ]
 ::before we start the server we need to save our config
 ::write choices to ini
 echo -------------------------------------------------------------------------------
-echo  Writing config file:
+echo  Writing config to file:
 echo  %FST_Config%
 echo -------------------------------------------------------------------------------
-::make config file for batch
-copy /y NUL "%FST_Config%" >NUL
 
 set InstallString=%InstallDir: =?%
 call :iniWrite InstallDir %InstallString% "%FST_Config%"
@@ -1396,7 +1439,7 @@ echo  Reason: %failed%
 echo.
 echo ///////////////////////////////----------------\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 echo.
-IF %1== 1 (call :errorNewSave %random% ) else goto end
+IF %1== 1 call :errorNewSave %random%
 pause
 echo ----------------------------------QUITTING-------------------------------------
 goto end
@@ -1423,7 +1466,7 @@ IF %ERRORLEVEL%== 1 (
 	echo  Hopefully the above created a new file with no errors.
 	echo  If so you can either [R]estart this tool or [Q]uit it.
 	echo.
-	choice /c:RQ /n /d:Q /t:20 /m "[R]estart or [Q]uit"
+	choice /c:RQ /n /m "[R]estart or [Q]uit"
 	IF %ERRORLEVEL%== 1 start "Factorio Server Tool" /D "%BatchDir%" "%FSTbat%"&&goto quickend
 	IF %ERRORLEVEL%== 2 echo -------------------------------------------------------------------------------
 	goto end
@@ -1514,7 +1557,7 @@ echo  You can attempt to [R]estart this script with the fixes applied
 echo.
 echo  Or [Q]uit and either check the FST_Config.ini or restart the tool
 echo.
-choice /c:DRQ /n /d:Q /t:20 /m "[D]elete, [R]estart or [Q]uit"
+choice /c:DRQ /n /m "[D]elete, [R]estart or [Q]uit"
 
 IF %ERRORLEVEL%== 1 (
 	del "%FST_Config%"
