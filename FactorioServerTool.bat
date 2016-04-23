@@ -981,8 +981,8 @@ call :ascii
 ::server setup complete now pick savefiles and write configs
 echo.
 echo -------------------------------------------------------------------------------
-echo  Select which savefile to load on launch newest save file or pick a save file
-echo  This setting will be remembered for the next time^(s^)
+echo  Select which savefile to load on launch, the newest save or pick a save file
+echo  This setting will be the default behavior on following runs
 echo  You can always select a different save file before the server launches
 echo -------------------------------------------------------------------------------
 echo.
