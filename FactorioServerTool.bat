@@ -722,6 +722,7 @@ echo ---------------------------------------------------------------------------
 echo  Creating config.ini backup
 copy /y "%DefaultConfig%" "%FacCfg%\config-backup.ini" 
 echo  Creating config-server.ini
+copy "%DefaultConfig%" "%ServerConfig%" 
 echo -------------------------------------------------------------------------------
 IF ERRORLEVEL 1 set failed=Could not write config-backup.ini/config-server.ini Make sure you have permission, you may need to run this tool as an admin ^(right-click run as admin^)  Attempted to write files to: %FacCfg%&& call :errorEnd 0
 goto writeServerConfig
