@@ -1,6 +1,6 @@
 @echo off 
 setlocal
-:: Factorio Server Tool v0.1.30
+:: Factorio Server Tool v0.1.31
 :: 23/Apr/2016
 :: http://cr4zyb4st4rd.co.uk
 :: https://github.com/Cr4zyy/FactorioServerTool
@@ -75,7 +75,7 @@ goto:eof
 exit /b 0
 
 :skip
-set vnumber=0.1.30
+set vnumber=0.1.31
 ::scale cmd to fit nicely
 mode con: cols=80 lines=60
 ::prettyness
@@ -1073,8 +1073,8 @@ echo ---------------------------------------------------------------------------
 echo.
 set /p SelectedSave=
 ::remove quotes from autocompleted entries if they contain spaces
-set SelectedSave=%SelectedSave:"=%
 IF "%SelectedSave%"=="" goto latestSave
+set SelectedSave=%SelectedSave:"=%
 
 IF EXIST "%ServerSaveFolder%\%SelectedSave%" (
 	set SaveFile=%SelectedSave%
@@ -1130,8 +1130,9 @@ echo ---------------------------------------------------------------------------
 echo.
 set /p SelectedSPSave=
 popd
-set SelectedSPSave=%SelectedSPSave:"=%
 IF "%SelectedSPSave%"=="" goto latestSPSave
+set SelectedSPSave=%SelectedSPSave:"=%
+
 
 IF EXIST "%StandardSaveFolder%\%SelectedSPSave%" (
 	set SaveFile=%SelectedSPSave%
@@ -1187,6 +1188,7 @@ IF "%SaveFile%"=="" set failed=Could not detect any save files you might need to
 goto startServer
 
 :aboutThis
+call :clearEL
 title Factorio Server Tool [ About ]
 cls
 call :ascii
@@ -1236,11 +1238,9 @@ echo                                Select an option:
 echo -------------------------------------------------------------------------------
 choice /c:CGB /n /m ">Open [C]onfig file, go to [G]ithub or go [B]ack to options"
 
-IF %ERRORLEVEL%== 1 "%FST_Config%"
-goto aboutThis
-IF %ERRORLEVEL%== 2 start http://github.com/Cr4zyy/FactorioServerTool/
-goto aboutThis
-IF %ERRORLEVEL%== 3 goto startServer
+IF %ERRORLEVEL%== 1 "%FST_Config%"&& goto aboutThis
+IF %ERRORLEVEL%== 2 start http://github.com/Cr4zyy/FactorioServerTool/&& goto aboutThis
+IF %ERRORLEVEL%== 3 echo goto startServer
 
 :startServer
 title Factorio Server Tool [ Options ]
