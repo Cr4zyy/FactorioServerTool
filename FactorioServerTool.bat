@@ -51,8 +51,10 @@ goto:eof
 
 ::Write values to ini config
 :iniWrite
+call :clearEL
 type %3 | find /v "%1=" > "%writeTemp%"
 copy /y %writeTemp% %3
+IF ERRORLEVEL 1 set failed=Could not write file Make sure you have permission, you may need to run this tool as an admin ^(right-click run as admin^)  Attempted to write files to: %3&& call :errorEnd 0
 echo %1=%2 >> %3
 del %writeTemp%
 goto:eof
