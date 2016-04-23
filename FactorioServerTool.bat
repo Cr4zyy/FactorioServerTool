@@ -1,7 +1,7 @@
 @echo off 
 setlocal
-:: Factorio Server Tool v0.1.29
-:: 22/Apr/2016
+:: Factorio Server Tool v0.1.30
+:: 23/Apr/2016
 :: http://cr4zyb4st4rd.co.uk
 :: https://github.com/Cr4zyy/FactorioServerTool
 
@@ -75,7 +75,7 @@ goto:eof
 exit /b 0
 
 :skip
-set vnumber=0.1.29
+set vnumber=0.1.30
 ::scale cmd to fit nicely
 mode con: cols=80 lines=60
 ::prettyness
@@ -1224,7 +1224,7 @@ echo ===========================================================================
 echo                                      ABOUT
 echo -------------------------------------------------------------------------------
 echo  Version: v%vnumber%
-echo  Dated: 22/Apr/2016
+echo  Dated: 23/Apr/2016
 echo  Author: Scott Coxhead
 echo.
 echo  Github: github.com/Cr4zyy/FactorioServerTool/
