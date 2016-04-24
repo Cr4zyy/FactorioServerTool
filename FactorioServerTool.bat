@@ -60,12 +60,11 @@ del %writeTemp%
 goto:eof
 
 ::Read the values from the ini config
-
 :iniRead
+::pushd to make sure we write these files to appdata where we can write
 pushd "%FacTemp%"
-for /f "delims=" %%i in ('find "%1=" %3') do set INIReadData=%%i
-echo Enter %INIReadData% >> en#er.bat
-echo set %2=%%2> enter.bat
+find "%1=" %3 | sort /r | date | find "=" > en#er.bat
+echo set %2=%%6> enter.bat
 call en#er.bat
 del en?er.bat > nul
 popd
@@ -76,7 +75,7 @@ goto:eof
 exit /b 0
 
 :skip
-set vnumber=0.1.32
+set vnumber=0.1.31
 ::scale cmd to fit nicely
 mode con: cols=80 lines=60
 ::prettyness
@@ -142,13 +141,14 @@ set FastStart=0
 set SaveSelection=0
 set SetupComplete=0
 set WinOS=0
-set ExtraParams=0
+set ExtraParams=
 
 ::string vars
 set errorString1=The tool has attempted to fix the error that occured, please re-launch the tool. If these errors continue please delete the config located:  %FST_Config%
 set enterRecommended=       Enter/Return will input the default 'Recommended' value listed
 :: Check if batch has been run before and a config exists
 IF NOT EXIST "%FST_Config%" goto setupBatch
+
 
 ::  read ini  "Search STRG" "VAR to set" "File to search"
 call :iniRead SetupComplete SetupValue "%FST_Config%"
@@ -165,30 +165,6 @@ echo  Reading config options from file:
 echo  %FST_Config%
 echo ------------------------------------------------------------------------------  
 echo.
-
-call :iniRead version cfgvnumber "%FST_Config%"
-set /a cfgvnumber=cfgvnumber
-set intvnumber=%vnumber:.=%
-::if cfg older than 0.1.31 write new values if they DONT exist!
-IF %cfgvnumber% LEQ 0131 (
-	echo ------------------------------------------------------------------------------  
-	echo  Detected an older config file version, writing new entries as required.
-	echo ------------------------------------------------------------------------------ 
-	
-	find "ExtraParams=" "%FST_Config%" > NUL
-	IF ERRORLEVEL== 1 (call :iniWrite ExtraParams %ExtraParams% "%FST_Config%")
-	
-	call :clearEL
-	
-	find "FastStart=" "%FST_Config%" > NUL
-	IF ERRORLEVEL== 1 (call :iniWrite FastStart %FastStart% "%FST_Config%")
-	
-	call :clearEL
-	
-	find "version=" "%FST_Config%" > NUL
-	set intvnumber=%vnumber:.=%
-	IF ERRORLEVEL== 1 (call :iniWrite version %intvnumber% "%FST_Config%")
-)
 
 ::  read ini  "Search STRG" "VAR to set" "File to search"
 call :iniRead SetupComplete SetupValue "%FST_Config%"
@@ -261,7 +237,6 @@ IF %GEOLEerror%== 1 set failed=%errorString1%&& call :errorFix SaveSelection 0
 ::Check Fast Start
 ::this value is not set by the batch but can be added as explained in the "About"
 call :iniRead FastStart FastStart "%FST_Config%"
-IF %FastStart%==%FastStart: =% set FastStart=0
 call :GEOLE %FastStart% 0 1
 IF %GEOLEvalue%== 1 ( IF %FastStart%== 1 echo FastStart = OK )
 IF %GEOLEvalue%== 0 set failed=%errorString1%&& call :errorFix FastStart 0
@@ -273,31 +248,31 @@ IF NOT EXIST %ServerConfig% set failed=%errorString1%&& call :errorFix SetupComp
 ::Check ExtraParams
 ::this value is not set by the batch but can be added as explained in the "About"
 find "ExtraParams=" "%FST_Config%" > NUL
-IF ERRORLEVEL== 0 (
-	for /f "tokens=*" %%p in (%FST_Config%) do call :processParam %%p
+IF %ERRORLEVEL%== 0 (
+	for /f "tokens=*" %%p in ("%FST_Config%") do call :processParam %%p
 	goto pbreak1
 
 	:processParam
 	set line=%*
-	echo %line: =?% >> "%TempFile%"
+	echo %line: =?% >> %TempFile%
 	goto :eof
 	
-	:pbreak1
-	find "ExtraParams=" "%TempFile%" | find "=" > "%TempConfig%"
-	for /f "tokens=2 delims==" %%d in (%TempConfig%) do set ExtraParams=%%d
-	::anything with 0/?/null is not an arg, so ignore
-	set ExtraParams=%ExtraParams: =%
-	IF "%ExtraParams%"=="0" set ExtraParams=&& del %TempFile%&& del %TempConfig%&& echo ExtraParams = NONE&& goto ParamsChecked
-	IF "%ExtraParams%"=="" set ExtraParams=&& del %TempFile%&& del %TempConfig%&& echo ExtraParams = NONE&& goto ParamsChecked
-	::remove the ? we used to let us read all the values
-	del %TempFile%
-	del %TempConfig%
-	set ExtraParams=%ExtraParams:?= %
-	echo ExtraParams = OK
-	goto ParamsChecked
+:pbreak1
+find "ExtraParams=" "%TempFile%" | find "=" > "%TempConfig%"
+for /f "tokens=2 delims==" %%d in (%TempConfig%) do set ExtraParams=%%d
+::anything with 0/?/null is not an arg, so ignore
+IF "%ExtraParams%"=="0" set ExtraParams=&& del %TempFile%&& echo ExtraParams = NONE&& goto ParamsChecked
+IF "%ExtraParams%"=="" set ExtraParams=&& del %TempFile%&& echo ExtraParams = NONE&& goto ParamsChecked
+::remove the ? we used to let us read all the values
+del %TempFile%
+del %TempConfig%
+set ExtraParams=%ExtraParams:?= %
+echo ExtraParams = OK
+goto ParamsChecked
 )
 echo ExtraParams = NONE
 :ParamsChecked
+
 echo.
 echo.
 ::do Fast Start bypass
@@ -722,7 +697,7 @@ echo ---------------------------------------------------------------------------
 echo  Copying your config file into config-server.ini
 echo  Located in %FacCfg%
 echo -------------------------------------------------------------------------------
-copy "%AlternateConfig%" "%ServerConfig%"
+copy %AlternateConfig% %ServerConfig%
 set ChangeSaveInterval=0
 goto setSaveTimer
 
@@ -1068,12 +1043,6 @@ call :iniWrite FacData %FactorioData% "%FST_Config%"
 set FactorioConfig=%FacCfg: =?%
 call :iniWrite FacConfig %FactorioConfig% "%FST_Config%"
 
-::as of 0.1.32 set these values
-call :iniWrite FastStart 0 "%FST_Config%"
-call :iniWrite ExtraParams 0 "%FST_Config%"
-set intvnumber=%vnumber:.=%
-call :iniWrite version %intvnumber% "%FST_Config%"
-
 IF %SaveSel%== 0 goto latestSave
 IF %SaveSel%== 1 goto enterSave
 
@@ -1103,9 +1072,8 @@ echo  If you want to load the newest save leave the input blank.
 echo -------------------------------------------------------------------------------
 echo.
 set /p SelectedSave=
-::empty answer is latest save
-IF "%SelectedSave%"=="" goto latestSave
 ::remove quotes from autocompleted entries if they contain spaces
+IF "%SelectedSave%"=="" goto latestSave
 set SelectedSave=%SelectedSave:"=%
 
 IF EXIST "%ServerSaveFolder%\%SelectedSave%" (
@@ -1116,11 +1084,9 @@ IF EXIST "%ServerSaveFolder%\%SelectedSave%" (
 		set SaveFile=%SelectedSave%.zip
 		goto startServer
 	)
-	echo Save file does not exist, please continue and pick another save.
-	pause
+	echo Save file does not exist, please pick another save.
 	goto enterSave
 )
-
 
 :latestSave
 ::for launching with the newest save file
@@ -1176,7 +1142,7 @@ IF EXIST "%StandardSaveFolder%\%SelectedSPSave%" (
 		set SaveFile=%SelectedSPSave%.zip
 		goto copySave
 	)
-	echo Save file does not exist, please continue and pick another save.
+	echo Save file does not exist, please pick another save.
 	goto selectSPSave
 )
 
@@ -1247,14 +1213,14 @@ echo  You can if you wish move this file between the appdata folder and the
 echo  batch file directory, do note that if one is loscated in the same directory
 echo  as the batch file, that will be the one used for the config options.
 echo.
-echo  You can set FastStart=1 in the config file to skip the Options screen
+echo  You can add FastStart=1 to the config file to skip the Options screen
 echo  and always begin the server straight away with the newest savefile.
 echo.
-echo  Add additional parameters, not supported by the setup, setting ExtraParams=
+echo  Add additional parameters not supported by the setup, setting ExtraParams=
 echo  e.g. ExtraParams=--Parameter 0 --Parameter 1
 echo  The hyphens must be set in the config file or the parameters will not work.
 echo.
-echo  Both can be removed by setting their value to 0
+echo  Both can be removed by setting 0 or deleting the line
 echo.
 echo ===============================================================================
 echo                                      ABOUT
