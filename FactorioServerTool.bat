@@ -1,6 +1,6 @@
 @echo off 
 setlocal
-:: Factorio Server Tool v0.1.32
+:: Factorio Server Tool v0.1.33
 :: 24/Apr/2016
 :: http://cr4zyb4st4rd.co.uk
 :: https://github.com/Cr4zyy/FactorioServerTool
@@ -61,12 +61,10 @@ goto:eof
 
 ::Read the values from the ini config
 :iniRead
-::pushd to make sure we write these files to appdata where we can write
-pushd "%FacTemp%"
-find "%1=" %3 | sort /r | date | find "=" > en#er.bat
-echo set %2=%%6> enter.bat
-call en#er.bat
-del en?er.bat > nul
+pushd "%3"
+	FOR /f "delims== tokens=2" %%i in ('findstr "%1=" "%4"') do set readOutput=%%i
+	::batch is atrocious so we're writing many values with spaces on the end unavoidably, this is to remove those...
+	set %2=%readOutput: =%
 popd
 goto:eof
 
@@ -75,7 +73,7 @@ goto:eof
 exit /b 0
 
 :skip
-set vnumber=0.1.31
+set vnumber=0.1.33
 ::scale cmd to fit nicely
 mode con: cols=80 lines=60
 ::prettyness
@@ -91,10 +89,14 @@ set FSTbat=%~f0
 
 ::FactorioServerTool files
 set FST_Config=%appdata%\Factorio\FST_Config.ini
+set FST_ConfigFile=FST_Config.ini
+set FST_ConfigDir=%appdata%\Factorio
 set FacAppdata=%appdata%\Factorio
+
 ::If a user wants they can store the config.ini in the same place as the batchfile this is a check for that.
 IF EXIST "%BatchDir%\FST_Config.ini" (
 	set FST_Config=%BatchDir%\FST_Config.ini
+	set FST_ConfigDir=%BatchDir%
 )
 ::Try to create temp files in %temp%, if that fails try %appdata%, if that fails error
 IF NOT EXIST "%temp%\Factorio" (
@@ -141,21 +143,22 @@ set FastStart=0
 set SaveSelection=0
 set SetupComplete=0
 set WinOS=0
-set ExtraParams=
+set ExtraParams=0
 
 ::string vars
 set errorString1=The tool has attempted to fix the error that occured, please re-launch the tool. If these errors continue please delete the config located:  %FST_Config%
 set enterRecommended=       Enter/Return will input the default 'Recommended' value listed
+
 :: Check if batch has been run before and a config exists
 IF NOT EXIST "%FST_Config%" goto setupBatch
 
-
-::  read ini  "Search STRG" "VAR to set" "File to search"
-call :iniRead SetupComplete SetupValue "%FST_Config%"
+::  read ini  "Search STRG" "VAR to set" "Folder containing file" "File to search"
+:: have to specify folder seperately because findstr cant handle spaces in dir names....
+call :iniRead SetupComplete SetupValue "%FST_ConfigDir%" "%FST_ConfigFile%"
 IF [%SetupValue%]==[1] ( 
 	goto checkBatch 
 ) else ( 
-	goto setupBatch
+	goto setupBatch 
 )
 
 :checkBatch
@@ -166,8 +169,34 @@ echo  %FST_Config%
 echo ------------------------------------------------------------------------------  
 echo.
 
+call :iniRead version cfgvnumber "%FST_ConfigDir%" "%FST_ConfigFile%"
+set /a cfgvnumber=cfgvnumber
+set intvnumber=%vnumber:.=%
+::if cfg older than 0.1.31 write new values if they DONT exist!
+IF %cfgvnumber% LEQ 0131 (
+	echo ------------------------------------------------------------------------------  
+	echo  Detected an older config file version, writing new entries as required.
+	echo ------------------------------------------------------------------------------ 
+	
+	find "ExtraParams=" "%FST_Config%" > NUL
+	IF ERRORLEVEL== 1 ( call :iniWrite ExtraParams %ExtraParams% "%FST_Config%" )
+	
+	call :clearEL
+	
+	find "FastStart=" "%FST_Config%" > NUL
+	IF ERRORLEVEL== 1 ( call :iniWrite FastStart %FastStart% "%FST_Config%" )
+	
+	call :clearEL
+	
+	find "version=" "%FST_Config%" > NUL
+	set intvnumber=%vnumber:.=%
+	IF ERRORLEVEL== 1 ( call :iniWrite version %intvnumber% "%FST_Config%" )
+	
+	echo ------------------------------------------------------------------------------ 
+)
+
 ::  read ini  "Search STRG" "VAR to set" "File to search"
-call :iniRead SetupComplete SetupValue "%FST_Config%"
+call :iniRead SetupComplete SetupValue "%FST_ConfigDir%" "%FST_ConfigFile%"
 IF [%SetupValue%]==[] set failed=%errorString1%&& call :errorFix SetupComplete 1
 call :GEOLE %SetupValue% 0 1
 ::Check SetupComplete
@@ -177,7 +206,7 @@ IF %GEOLEerror%== 1 set failed=%errorString1%&& call :errorFix SetupComplete 1
 
 
 ::Check Install Directory
-call :iniRead InstallDir SavedDir "%FST_Config%"
+call :iniRead InstallDir SavedDir "%FST_ConfigDir%" "%FST_ConfigFile%"
 :: sets the dir in a usable fashion with spaces
 set FactorioDir=%SavedDir:?= %
 :: sets dir with no spaces
@@ -186,14 +215,15 @@ IF EXIST "%FactorioDir%\bin" echo InstallDir = OK
 IF NOT EXIST "%FactorioDir%\bin" set failed=%errorString1%&& call :errorFix InstallDir 0 SetupComplete 0
 
 ::get FacData for var
-call :iniRead FacData FacData "%FST_Config%"
+call :iniRead FacData FacData "%FST_ConfigDir%" "%FST_ConfigFile%"
 set FacData=%FacData:?= %
-call :iniRead FacConfig FactorioConfig "%FST_Config%"
+call :iniRead FacConfig FactorioConfig "%FST_ConfigDir%" "%FST_ConfigFile%"
 set FacCfg=%FactorioConfig:?= %
 ::set the server data vars
 ::faccfg
 set DefaultConfig=%FacCfg%\config.ini
-set ServerConfig=%FacCfg%\config-server.ini 
+set ServerConfig=%FacCfg%\config-server.ini
+set ServerConfigFile=config-server.ini
 ::facdata
 set ServerSaveFolder=%FacData%\server\saves
 set ServerModFolder=%FacData%\server\mods
@@ -202,33 +232,33 @@ set StandardModFolder=%FacData%\mods
 set ServerFolder=%FacData%\server
 
 ::Check for 32/64 bit Install
-call :iniRead WinOS WinOS "%FST_Config%"
+call :iniRead WinOS WinOS "%FST_ConfigDir%" "%FST_ConfigFile%"
 IF EXIST "%FactorioDir%\bin\%WinOS%\Factorio.exe" echo Executable = OK
 IF NOT EXIST "%FactorioDir%\bin\%WinOS%\Factorio.exe" set failed=%errorString1%&& call :errorFix WinOS 0
 
 ::Check AutoSave Timer
-call :iniRead AutoSaveTimer AutoSaveTimer "%FST_Config%"
+call :iniRead AutoSaveTimer AutoSaveTimer "%FST_ConfigDir%" "%FST_ConfigFile%"
 call :GEOLE %AutoSaveTimer% 1 500
 IF %GEOLEvalue%== 1 echo AutoSaveTimer = OK
 IF %GEOLEvalue%== 0 set failed=%errorString1%&& call :errorFix AutoSaveTimer 5
 IF %GEOLEerror%== 1 set failed=%errorString1%&& call :errorFix AutoSaveTimer 5
 
 ::Check AutoSave Slots
-call :iniRead AutoSaveSlots AutoSaveSlots "%FST_Config%"
+call :iniRead AutoSaveSlots AutoSaveSlots "%FST_ConfigDir%" "%FST_ConfigFile%"
 call :GEOLE %AutoSaveSlots% 1 500
 IF %GEOLEvalue%== 1 echo AutoSaveSlots = OK
 IF %GEOLEvalue%== 0 set failed=%errorString1%&& call :errorFix AutoSaveSlots 3
 IF %GEOLEerror%== 1 set failed=%errorString1%&& call :errorFix AutoSaveSlots 3
 
 ::Check Latency
-call :iniRead Latency Latency "%FST_Config%"
+call :iniRead Latency Latency "%FST_ConfigDir%" "%FST_ConfigFile%"
 call :GEOLE %Latency% 1 5000
 IF %GEOLEvalue%== 1 echo Latency = OK
 IF %GEOLEvalue%== 0 set failed=%errorString1%&& call :errorFix Latency 100
 IF %GEOLEerror%== 1 set failed=%errorString1%&& call :errorFix Latency 100
 
 ::Check Save Selection
-call :iniRead SaveSelection SaveSelection "%FST_Config%"
+call :iniRead SaveSelection SaveSelection "%FST_ConfigDir%" "%FST_ConfigFile%"
 call :GEOLE %SaveSelection% 0 1
 IF %GEOLEvalue%== 1 echo SaveSelection = OK
 IF %GEOLEvalue%== 0 set failed=%errorString1%&& call :errorFix SaveSelection 0
@@ -236,7 +266,8 @@ IF %GEOLEerror%== 1 set failed=%errorString1%&& call :errorFix SaveSelection 0
 
 ::Check Fast Start
 ::this value is not set by the batch but can be added as explained in the "About"
-call :iniRead FastStart FastStart "%FST_Config%"
+call :iniRead FastStart FastStart "%FST_ConfigDir%" "%FST_ConfigFile%"
+IF %FastStart%==%FastStart: =% set FastStart=0
 call :GEOLE %FastStart% 0 1
 IF %GEOLEvalue%== 1 ( IF %FastStart%== 1 echo FastStart = OK )
 IF %GEOLEvalue%== 0 set failed=%errorString1%&& call :errorFix FastStart 0
@@ -249,30 +280,30 @@ IF NOT EXIST %ServerConfig% set failed=%errorString1%&& call :errorFix SetupComp
 ::this value is not set by the batch but can be added as explained in the "About"
 find "ExtraParams=" "%FST_Config%" > NUL
 IF %ERRORLEVEL%== 0 (
-	for /f "tokens=*" %%p in ("%FST_Config%") do call :processParam %%p
+	for /f "tokens=*" %%p in (%FST_Config%) do call :processParam %%p
 	goto pbreak1
 
 	:processParam
 	set line=%*
-	echo %line: =?% >> %TempFile%
+	echo %line: =?% >> "%TempFile%"
 	goto :eof
 	
-:pbreak1
-find "ExtraParams=" "%TempFile%" | find "=" > "%TempConfig%"
-for /f "tokens=2 delims==" %%d in (%TempConfig%) do set ExtraParams=%%d
-::anything with 0/?/null is not an arg, so ignore
-IF "%ExtraParams%"=="0" set ExtraParams=&& del %TempFile%&& echo ExtraParams = NONE&& goto ParamsChecked
-IF "%ExtraParams%"=="" set ExtraParams=&& del %TempFile%&& echo ExtraParams = NONE&& goto ParamsChecked
-::remove the ? we used to let us read all the values
-del %TempFile%
-del %TempConfig%
-set ExtraParams=%ExtraParams:?= %
-echo ExtraParams = OK
-goto ParamsChecked
+	:pbreak1
+	find "ExtraParams=" "%TempFile%" | find "=" > "%TempConfig%"
+	for /f "tokens=2 delims==" %%d in (%TempConfig%) do set ExtraParams=%%d
+	::anything with 0/?/null is not an arg, so ignore
+	set ExtraParams=%ExtraParams: =%
+	IF "%ExtraParams%"=="0" set ExtraParams=&& del %TempFile%&& del %TempConfig%&& echo ExtraParams = NONE&& goto ParamsChecked
+	IF "%ExtraParams%"=="" set ExtraParams=&& del %TempFile%&& del %TempConfig%&& echo ExtraParams = NONE&& goto ParamsChecked
+	::remove the ? we used to let us read all the values
+	del %TempFile%
+	del %TempConfig%
+	set ExtraParams=%ExtraParams:?= %
+	echo ExtraParams = OK
+	goto ParamsChecked
 )
 echo ExtraParams = NONE
 :ParamsChecked
-
 echo.
 echo.
 ::do Fast Start bypass
@@ -531,6 +562,7 @@ IF [%DataDefault%]==[false] set FacData=%FacCfg%\..
 :: Factorio variables
 set DefaultConfig=%FacCfg%\config.ini
 set ServerConfig=%FacCfg%\config-server.ini
+set ServerConfigFile=config-server.ini
 
 set ServerSaveFolder=%FacData%\server\saves
 set ServerModFolder=%FacData%\server\mods
@@ -679,7 +711,7 @@ echo ---------------------------------------------------------------------------
 echo.
 set /p AlternateConfig=
 
-IF NOT EXIST %AlternateConfig% (
+IF NOT EXIST "%AlternateConfig%" (
 	echo No file located you can [R]etry or [C]reate a new one
 	choice /c:RC /n /m "[R/C]"
 	IF %ERRORLEVEL%== 1 goto useAnotherConfig
@@ -697,7 +729,7 @@ echo ---------------------------------------------------------------------------
 echo  Copying your config file into config-server.ini
 echo  Located in %FacCfg%
 echo -------------------------------------------------------------------------------
-copy %AlternateConfig% %ServerConfig%
+copy "%AlternateConfig%" "%ServerConfig%"
 set ChangeSaveInterval=0
 goto setSaveTimer
 
@@ -735,8 +767,8 @@ call :errorEnd 0
 
 :writeServerConfig
 ::modify save locations for server
-call :iniRead read-data CurReadData "%ServerConfig%"
-call :iniRead write-data CurWriteData "%ServerConfig%"
+call :iniRead read-data CurReadData "%FacCfg%" "%ServerConfigFile%"
+call :iniRead write-data CurWriteData "%FacCfg%" "%ServerConfigFile%"
 
 type "%ServerConfig%" | find /v "[path]" > "%TempConfig%"
 type "%TempConfig%" | find /v "read-data=" > "%ServerConfig%"
@@ -761,12 +793,12 @@ cls
 call :ascii
 :pickPortcls
 IF EXIST "%ServerConfig%" (
-	call :iniRead port CurServPort "%ServerConfig%"
+	call :iniRead port CurServPort "%FacCfg%" "%ServerConfigFile%"
 ) else (
 	set CurServPort=-NOT SET OR FOUND-
 )
 ::Get current default config port and add + 1 for recommended port this way it cant conflict with gameclient
-call :iniRead port NewServerPort "%DefaultConfig%"
+call :iniRead port NewServerPort "%FacCfg%" "config.ini"
 set /a "NewServerPort+=1"
 
 echo -------------------------------------------------------------------------------
@@ -823,7 +855,7 @@ call :ascii
 :setSaveTimercls
 ::get current value if available
 IF EXIST "%FST_Config%" (
-	call :iniRead AutoSaveTimer CurSaveInt "%FST_Config%"
+	call :iniRead AutoSaveTimer CurSaveInt "%FST_ConfigDir%" "%FST_ConfigFile%"
 ) else (
 	set CurSaveInt=-NOT SET OR FOUND-
 )
@@ -878,7 +910,7 @@ call :ascii
 :setSaveSlotscls
 ::get current value if available
 IF EXIST "%FST_Config%" (
-	call :iniRead AutoSaveSlots CurSaveSlot "%FST_Config%"
+	call :iniRead AutoSaveSlots CurSaveSlot "%FST_ConfigDir%" "%FST_ConfigFile%"
 ) else (
 	set CurSaveSlot=-NOT SET OR FOUND-
 )
@@ -933,7 +965,7 @@ call :ascii
 :setLatencycls
 ::get current value if available
 IF EXIST "%FST_Config%" (
-	call :iniRead Latency CurLatValue "%FST_Config%"
+	call :iniRead Latency CurLatValue "%FST_ConfigDir%" "%FST_ConfigFile%"
 ) else (
 	set CurLatValue=-NOT SET OR FOUND-
 )
@@ -1043,6 +1075,12 @@ call :iniWrite FacData %FactorioData% "%FST_Config%"
 set FactorioConfig=%FacCfg: =?%
 call :iniWrite FacConfig %FactorioConfig% "%FST_Config%"
 
+::as of 0.1.32 set these values
+call :iniWrite FastStart 0 "%FST_Config%"
+call :iniWrite ExtraParams 0 "%FST_Config%"
+set intvnumber=%vnumber:.=%
+call :iniWrite version %intvnumber% "%FST_Config%"
+
 IF %SaveSel%== 0 goto latestSave
 IF %SaveSel%== 1 goto enterSave
 
@@ -1066,15 +1104,18 @@ for /F "delims=" %%S in ('dir "%ServerSaveFolder%\*.zip" /b /o:-d') do (
 	set /a "n+=1, 1/(10-n)" 2>nul || goto :break
 )
 :break
+set SelectedSave=
 echo -------------------------------------------------------------------------------
 echo  Enter the save file name ^(savefile.zip^). Tab to complete.
 echo  If you want to load the newest save leave the input blank.
 echo -------------------------------------------------------------------------------
 echo.
 set /p SelectedSave=
+
+IF NOT DEFINED SelectedSave goto latestSave
 ::remove quotes from autocompleted entries if they contain spaces
-IF "%SelectedSave%"=="" goto latestSave
 set SelectedSave=%SelectedSave:"=%
+
 
 IF EXIST "%ServerSaveFolder%\%SelectedSave%" (
 	set SaveFile=%SelectedSave%
@@ -1122,6 +1163,7 @@ for /F "delims=" %%S in ('dir "%StandardSaveFolder%\*.zip" /b /o:-d') do (
   set /a "ns+=1, 1/(10-ns)" 2>nul || goto :break1
 )
 :break1
+set SelectedSPSave=
 echo -------------------------------------------------------------------------------
 echo  Enter the save file name ^(savefile.zip^). Tab to complete.
 echo  If you want to load the newest SP save leave blank.
@@ -1130,7 +1172,7 @@ echo ---------------------------------------------------------------------------
 echo.
 set /p SelectedSPSave=
 popd
-IF "%SelectedSPSave%"=="" goto latestSPSave
+IF NOT DEFINED SelectedSPSave goto latestSPSave
 set SelectedSPSave=%SelectedSPSave:"=%
 
 
@@ -1213,14 +1255,14 @@ echo  You can if you wish move this file between the appdata folder and the
 echo  batch file directory, do note that if one is loscated in the same directory
 echo  as the batch file, that will be the one used for the config options.
 echo.
-echo  You can add FastStart=1 to the config file to skip the Options screen
+echo  You can set FastStart=1 in the config file to skip the Options screen
 echo  and always begin the server straight away with the newest savefile.
 echo.
-echo  Add additional parameters not supported by the setup, setting ExtraParams=
+echo  Add additional parameters, not supported by the setup, setting ExtraParams=
 echo  e.g. ExtraParams=--Parameter 0 --Parameter 1
 echo  The hyphens must be set in the config file or the parameters will not work.
 echo.
-echo  Both can be removed by setting 0 or deleting the line
+echo  Both settings can be reset/disabled by setting the value to 0
 echo.
 echo ===============================================================================
 echo                                      ABOUT
@@ -1248,7 +1290,7 @@ cls
 ::mod counter (or close enough)
 pushd "%ServerModFolder%"
 IF EXIST mod-list.json (
-	FOR /F "tokens=2" %%m IN ('FINDSTR /L ^"true^" "mod-list.json"') do (
+	FOR /F "tokens=2" %%m IN ('FINDSTR ^"true^" "mod-list.json"') do (
 		echo %%m>> "%TempFile%"
 		)
 	popd
@@ -1264,9 +1306,9 @@ popd
 
 ::grab port number from config-server.ini
 IF EXIST "%ServerConfig%" (
-	call :iniRead port ServerPort "%ServerConfig%"
+	call :iniRead port ServerPort "%FacCfg%" "%ServerConfigFile%"
 ) else (
-set ServerPort=Could not find config-server.ini to identify port
+	set ServerPort=Could not find config-server.ini to identify port
 )
 ::put ip:port into user clipboard so they can send it to their friends!
 echo %CurrIP%:%ServerPort%| clip
