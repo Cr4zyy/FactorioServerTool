@@ -344,13 +344,13 @@ echo.
 choice /c:NAS /n /m ">Use [A]ppdata folder or the [S]ame directory as FactorioServerTool.bat"
 
 IF %ERRORLEVEL%== 1 goto setupBatch
-IF %ERRORLEVEL%== 2 set FST_Config=%appdata%\Factorio\FST_Config.ini&& set FST_Dir=%appdata%\Factorio
-IF %ERRORLEVEL%== 3 set FST_Config=%BatchDir%FST_Config.ini&& set FST_Dir=%BatchDir%
+IF %ERRORLEVEL%== 2 set FST_Config=%appdata%\Factorio\FST_Config.ini&& set FST_ConfigDir=%appdata%\Factorio
+IF %ERRORLEVEL%== 3 set FST_Config=%BatchDir%FST_Config.ini&& set FST_ConfigDir=%BatchDir%
 
 call :clearEL
 
-IF NOT EXIST "%FST_Dir%" (
-	mkdir "%FST_Dir%"
+IF NOT EXIST "%FST_ConfigDir%" (
+	mkdir "%FST_ConfigDir%"
 	IF ERRORLEVEL== 1 (
 		echo.
 		echo  ERROR!
@@ -379,6 +379,8 @@ IF NOT EXIST "%FST_Config%" (
 		goto setupBatch
 	)
 )
+::delete it after empty file inteferes with some checks
+del %FST_Config%
 
 cls 
 call :ascii
