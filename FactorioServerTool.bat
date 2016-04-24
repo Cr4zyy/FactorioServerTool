@@ -1,7 +1,7 @@
 @echo off 
 setlocal
-:: Factorio Server Tool v0.1.31
-:: 23/Apr/2016
+:: Factorio Server Tool v0.1.32
+:: 24/Apr/2016
 :: http://cr4zyb4st4rd.co.uk
 :: https://github.com/Cr4zyy/FactorioServerTool
 
@@ -70,15 +70,6 @@ call en#er.bat
 del en?er.bat > nul
 popd
 goto:eof
-REM :iniRead
-REM ::pushd to make sure we write these files to appdata where we can write
-REM pushd "%FacTemp%"
-REM find "%1=" %3 | sort /r | call :enterBat | find "=" > en#er.bat
-REM echo set %2=%%6> enter.bat
-REM call en#er.bat
-REM del en?er.bat > nul
-REM popd
-REM goto:eof
 
 ::sets errorlevel to 0 properly
 :clearEL
@@ -1269,7 +1260,7 @@ echo ===========================================================================
 echo                                      ABOUT
 echo -------------------------------------------------------------------------------
 echo  Version: v%vnumber%
-echo  Dated: 23/Apr/2016
+echo  Dated: 24/Apr/2016
 echo  Author: Scott Coxhead
 echo.
 echo  Github: github.com/Cr4zyy/FactorioServerTool/
