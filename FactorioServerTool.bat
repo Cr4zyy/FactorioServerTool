@@ -1,6 +1,6 @@
 @echo off 
 setlocal
-:: Factorio Server Tool v0.1.33
+:: Factorio Server Tool v0.1.34
 :: 24/Apr/2016
 :: http://cr4zyb4st4rd.co.uk
 :: https://github.com/Cr4zyy/FactorioServerTool
@@ -73,7 +73,7 @@ goto:eof
 exit /b 0
 
 :skip
-set vnumber=0.1.33
+set vnumber=0.1.34
 ::scale cmd to fit nicely
 mode con: cols=80 lines=60
 ::prettyness
@@ -152,6 +152,21 @@ set enterRecommended=       Enter/Return will input the default 'Recommended' va
 :: Check if batch has been run before and a config exists
 IF NOT EXIST "%FST_Config%" goto setupBatch
 
+call :iniRead version cfgvnumber "%FST_ConfigDir%" "%FST_ConfigFile%"
+set /a cfgvnumber=cfgvnumber
+set intvnumber=%vnumber:.=%
+::if cfg older than 0.1.31 write new values if they DONT exist!
+IF %cfgvnumber% LEQ 0131 (
+	echo ------------------------------------------------------------------------------  
+	echo  NOTE! If you were using an older version due to changes in making this tool
+	echo  work across other Windows locale installs the tool could quit without error
+	echo.
+	echo  If that is the case you may have to delete the config file for the tool which
+	echo  is located at: %FST_Config%
+	echo.
+	echo ------------------------------------------------------------------------------
+	pause
+)
 ::  read ini  "Search STRG" "VAR to set" "Folder containing file" "File to search"
 :: have to specify folder seperately because findstr cant handle spaces in dir names....
 call :iniRead SetupComplete SetupValue "%FST_ConfigDir%" "%FST_ConfigFile%"
@@ -1083,6 +1098,8 @@ call :iniWrite ExtraParams 0 "%FST_Config%"
 set intvnumber=%vnumber:.=%
 call :iniWrite version %intvnumber% "%FST_Config%"
 
+set ExtraParams=
+
 IF %SaveSel%== 0 goto latestSave
 IF %SaveSel%== 1 goto enterSave
 
@@ -1135,6 +1152,17 @@ IF EXIST "%ServerSaveFolder%\%SelectedSave%" (
 ::for launching with the newest save file
 for /F "delims=" %%I in ('dir "%ServerSaveFolder%\*.zip" /b /od') do set SaveFile=%%~I
 set SaveFile=%SaveFile:"=%
+
+::if the newest file is a autosave, rename it, this way it doesnt get overwritten when autosaving
+set AutoSaveFile=%SaveFile:~0,-4%
+set AutoSaveFile=%AutoSaveFile:~0,9%
+call :getDateTime
+set newSaveName=FST_AS_%dateTime%.zip
+IF "%AutoSaveFile%"=="_autosave" (
+	echo  Determined newest save file is an autosave file, renaming it to avoid conflicts
+	copy /y "%ServerSaveFolder%\%SaveFile%" "%ServerSaveFolder%\%newSaveName%"
+	set SaveFile=%newSaveName%
+)
 
 echo -------------------------------------------------------------------------------
 echo  Starting server with newest found save file
@@ -1323,7 +1351,8 @@ echo.
 echo  Tell your friends to connect to ^(You can paste this, it's in your clipboard^!^):
 echo  %CurrIP%:%ServerPort%
 echo.
-echo  Above should show your IP, if not, check here: icanhazip.com
+echo  Above should show your IP, if not, check here: http://icanhazip.com
+echo  Note if you're on a complex network e.g. university, it may not be correct!!
 echo.
 echo  YOU can connect with: localhost
 echo.
