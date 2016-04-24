@@ -530,7 +530,7 @@ IF [%DataDefault%]==[false] set FacData=%FacCfg%\..
 ::Now that we know the actual data locations we can set the vars (for this run, we store and set again on next run)
 :: Factorio variables
 set DefaultConfig=%FacCfg%\config.ini
-set ServerConfig=%FacCfg%\config-server.ini 
+set ServerConfig=%FacCfg%\config-server.ini
 
 set ServerSaveFolder=%FacData%\server\saves
 set ServerModFolder=%FacData%\server\mods
