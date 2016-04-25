@@ -859,7 +859,7 @@ echo  Your friends will be able to connect on:
 echo  %CurrIP%:%NewServerPort%
 echo -------------------------------------------------------------------------------
 echo  YOU will be able to connect with:
-echo  localhost
+echo  localhost:%NewServerPort%
 echo -------------------------------------------------------------------------------
 set ChangeSaveInterval=0
 IF %ChangePortNumber%== 0  goto setSaveTimer
@@ -1354,7 +1354,7 @@ echo.
 echo  Above should show your IP, if not, check here: http://icanhazip.com
 echo  Note if you're on a complex network e.g. university, it may not be correct!!
 echo.
-echo  YOU can connect with: localhost
+echo  YOU can connect with: localhost:%ServerPort%
 echo.
 echo -------------------------------------------------------------------------------
 echo.
