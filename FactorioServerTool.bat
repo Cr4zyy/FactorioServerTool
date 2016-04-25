@@ -1602,7 +1602,7 @@ IF %ERRORLEVEL%== 1 (
 	"%FactorioDir%\bin\%WinOS%\Factorio.exe" --create FST_newsave%1.zip
 	timeout 1
 	mkdir "%ServerSaveFolder%"
-	copy /y "%StandardSaveFolder%\FST_newsave%1.zip" "%ServerSaveFolder%"
+	move /y "%StandardSaveFolder%\FST_newsave%1.zip" "%ServerSaveFolder%"
 	
 	echo -------------------------------------------------------------------------------
 	echo  Hopefully the above created a new file with no errors.
