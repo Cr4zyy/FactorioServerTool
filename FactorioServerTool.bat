@@ -1259,6 +1259,69 @@ IF "%SaveFile%"=="" set failed=Could not detect any save files you might need to
 
 goto startServer
 
+:makeNewSaveFile
+cls
+call :ascii
+::create a new save file using --create	
+set CreateNewSaveName=
+set SaveExists=0
+echo -------------------------------------------------------------------------------
+echo  Please input a name for your new save, leaving this blank will generate a new
+echo  file name ^(FST_YYYYMMDD-HHMMSS^) spaces will be converted to underscores ^(_^)
+echo  Avoid any special characters.
+echo -------------------------------------------------------------------------------
+echo.
+set /p CreateNewSaveName=
+::set save name to FST_DATE_TIME if no user input
+call :getDateTime
+IF NOT DEFINED CreateNewSaveName set CreateNewSaveName=FST_%dateTime%
+::strip spaces replace with _
+set CreateNewSaveName=%CreateNewSaveName: =_%
+::strip .zip if input
+set IsZip=%CreateNewSaveName:~-4%
+IF "%IsZip%"==".zip" set CreateNewSaveName=%CreateNewSaveName:~0,-4%
+::strip . replace with _
+set CreateNewSaveName=%CreateNewSaveName:.=_%
+::add zip ext for all answers
+set CreateNewSaveName=%CreateNewSaveName%.zip
+::check if file already exists, we dont want to overwrite anything!
+IF EXIST "%ServerSaveFolder%\%CreateNewSaveName%" set SaveExists=1
+IF EXIST "%StandardSaveFolder%\%CreateNewSaveName%" set SaveExists=1
+IF "%SaveExists%"=="1" (
+	echo -------------------------------------------------------------------------------
+	echo  Detected a save file that already matches the input name.
+	echo  Found a file matching: %CreateNewSaveName%
+	echo  Continue to input another save file name
+	echo -------------------------------------------------------------------------------
+	pause
+	goto makeNewSaveFile
+)
+
+echo -------------------------------------------------------------------------------
+echo.
+echo  Creating save file: %CreateNewSaveName%
+echo.
+echo -------------------------------------------------------------------------------
+
+"%FactorioDir%\bin\%WinOS%\Factorio.exe" --create "%CreateNewSaveName%"
+
+echo -------------------------------------------------------------------------------
+echo.
+echo  Moving save file to server directory
+echo.
+echo -------------------------------------------------------------------------------
+
+move /y "%StandardSaveFolder%\%CreateNewSaveName%" "%ServerSaveFolder%"
+
+echo -------------------------------------------------------------------------------
+echo.
+echo  Would you like to use this save file now?
+echo.
+echo -------------------------------------------------------------------------------
+choice /c:YN /n /m ">Use new file now? [Y/N]"
+IF %ERRORLEVEL%== 1 goto latestSave
+IF %ERRORLEVEL%== 2 goto startServer
+
 :aboutThis
 call :clearEL
 title Factorio Server Tool [ About ]
@@ -1381,16 +1444,19 @@ echo     [3] Single player save FILE^(s^)           [8] Open Factorio Data Dir
 echo.
 echo     [4] Modify Auto SAVE TIME ^& SLOTS        [9] Open Factorio Install Dir
 echo.
-echo     [5] Modify LATENCY value                 [A]bout
+echo     [5] Modify LATENCY value
+echo.
+echo     [C]reate a new save game                 [A]bout
 echo.
 echo -------------------------------------------------------------------------------
 echo.
-choice /c:123456789AB /n /d:B /t:1 /m ">Select a choice from above"
-IF NOT ERRORLEVEL==11 goto :breakout
+choice /c:123456789CAB /n /d:B /t:1 /m ">Select a choice from above"
+IF NOT ERRORLEVEL==12 goto :breakout
 )
 
 :breakout
-IF %ERRORLEVEL%== 10 goto aboutThis
+IF %ERRORLEVEL%== 11 goto aboutThis
+IF %ERRORLEVEL%== 10 goto makeNewSaveFile
 IF %ERRORLEVEL%== 1 goto executeServer
 IF %ERRORLEVEL%== 2 goto enterSave
 IF %ERRORLEVEL%== 3 goto selectSPSave
