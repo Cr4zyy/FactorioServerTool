@@ -1579,13 +1579,13 @@ echo  [R]eload the script, providing you with the options screen again.
 echo.
 echo  [F]ast Restart the server, instant server start, no options.
 echo.
-echo  [L]ast Save Restart, as above, but with the newest save file.
+echo  [L]atest Save Restart, as above, but with the newest save file.
 echo.
 echo  [S]elect Save Restart, same as a fast restart but will let you select a save
 echo.
 echo  [Q]uit.
 echo.
-choice /c:RFLSQ /n /m "> [R]eload, [F]ast Restart, [L]ast Save, [S]elect Save or [Q]uit"
+choice /c:RFLSQ /n /m "> [R]eload, [F]ast Restart, [L]atest Save, [S]elect Save or [Q]uit"
 
 IF %ERRORLEVEL%== 1 goto skip
 IF %ERRORLEVEL%== 2 goto executeServer
