@@ -195,6 +195,10 @@ echo.
 call :iniRead version cfgvnumber "%FST_ConfigDir%" "%FST_ConfigFile%"
 set /a cfgvnumber=cfgvnumber
 set intvnumber=%vnumber:.=%
+::update cfg if higher version number
+IF %vnumber% GTR %cfgvnumber% (
+	call :iniWrite version %intvnumber% "%FST_Config%"
+)
 ::if cfg older than 0.1.31 write new values if they DONT exist!
 IF %cfgvnumber% LEQ 0131 (
 	echo ------------------------------------------------------------------------------  
@@ -212,7 +216,6 @@ IF %cfgvnumber% LEQ 0131 (
 	call :clearEL
 	
 	find "version=" "%FST_Config%" > NUL
-	set intvnumber=%vnumber:.=%
 	IF ERRORLEVEL== 1 ( call :iniWrite version %intvnumber% "%FST_Config%" )
 	
 	echo ------------------------------------------------------------------------------ 
@@ -1119,7 +1122,7 @@ call :ascii
 pushd "%ServerSaveFolder%"
 echo -------------------------------------------------------------------------------
 echo  Enter save file name to load
-echo  Showing newest 10 save files, sorted newest ^> oldest
+echo  Showing newest 20 save files, sorted newest ^> oldest
 echo -------------------------------------------------------------------------------
 echo  Date      Time  -- File name
 echo -------------------------------------------------------------------------------
@@ -1128,10 +1131,11 @@ for /F "delims=" %%S in ('dir "%ServerSaveFolder%\*.zip" /b /o:-d') do (
 	for %%a in ("%%S") do (
 		echo %%~ta -- %%~na
 	)
-	set /a "n+=1, 1/(10-n)" 2>nul || goto :break
+	set /a "n+=1, 1/(20-n)" 2>nul || goto :break
 )
 :break
 set SelectedSave=
+echo.
 echo -------------------------------------------------------------------------------
 echo  Enter the save file name ^(savefile.zip^). Tab to complete.
 echo  If you want to load the newest save leave the input blank.
@@ -1160,11 +1164,7 @@ IF EXIST "%ServerSaveFolder%\%SelectedSave%" (
 call :getDateTime
 set newSaveName=FST_AS_%dateTime%.zip
 set AutoSaveFile=%SelectedSave:~0,-4%
-echo %AutoSaveFile%
 set AutoSaveFile=%AutoSaveFile:~0,9%
-echo %SelectedSave%
-echo %AutoSaveFile%
-echo check
 IF "%AutoSaveFile%"=="_autosave" (
 	echo  Determined newest save file is an autosave file, renaming it to avoid conflicts
 	copy /y "%ServerSaveFolder%\%SelectedSave%" "%ServerSaveFolder%\%newSaveName%"
@@ -1180,6 +1180,7 @@ goto startServer
 
 :startNewSave
 set SaveFile=%newSaveName%
+IF %FastStart%== 1 goto executeServer
 goto startServer
 
 :latestSave
@@ -1221,7 +1222,7 @@ call :ascii
 pushd "%StandardSaveFolder%"
 echo -------------------------------------------------------------------------------
 echo  Enter save file name to load
-echo  Showing newest 10 Single Player save files, sorted newest ^> oldest
+echo  Showing newest 20 Single Player save files, sorted newest ^> oldest
 echo -------------------------------------------------------------------------------
 echo  Date      Time  -- File name
 echo -------------------------------------------------------------------------------
@@ -1230,10 +1231,11 @@ for /F "delims=" %%S in ('dir "%StandardSaveFolder%\*.zip" /b /o:-d') do (
 	for %%a in ("%%S") do (
 		echo %%~ta -- %%~na
 	)
-  set /a "ns+=1, 1/(10-ns)" 2>nul || goto :break1
+  set /a "ns+=1, 1/(20-ns)" 2>nul || goto :break1
 )
 :break1
 set SelectedSPSave=
+echo.
 echo -------------------------------------------------------------------------------
 echo  Enter the save file name ^(savefile.zip^). Tab to complete.
 echo  If you want to load the newest SP save leave blank.
