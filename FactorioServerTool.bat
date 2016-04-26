@@ -1122,7 +1122,7 @@ call :ascii
 pushd "%ServerSaveFolder%"
 echo -------------------------------------------------------------------------------
 echo  Enter save file name to load
-echo  Showing newest 20 save files, sorted newest ^> oldest
+echo  Showing upto the 20 newest save files, sorted newest ^> oldest
 echo -------------------------------------------------------------------------------
 echo  Date      Time  -- File name
 echo -------------------------------------------------------------------------------
@@ -1222,7 +1222,7 @@ call :ascii
 pushd "%StandardSaveFolder%"
 echo -------------------------------------------------------------------------------
 echo  Enter save file name to load
-echo  Showing newest 20 Single Player save files, sorted newest ^> oldest
+echo  Showing upto the 20 newest save files, sorted newest ^> oldest
 echo -------------------------------------------------------------------------------
 echo  Date      Time  -- File name
 echo -------------------------------------------------------------------------------
