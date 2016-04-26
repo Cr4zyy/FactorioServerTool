@@ -72,6 +72,14 @@ goto:eof
 :clearEL
 exit /b 0
 
+::updates modified date/time
+:touch
+if %1.==. goto:eof
+if not exist %1 goto:eof
+copy /b %1 +,, > nul
+echo Updated time stamp.
+exit /b 0
+
 :skip
 set vnumber=0.1.34
 ::scale cmd to fit nicely
@@ -1135,18 +1143,44 @@ IF NOT DEFINED SelectedSave goto latestSave
 ::remove quotes from autocompleted entries if they contain spaces
 set SelectedSave=%SelectedSave:"=%
 
+set IsZip=
+set IsZip=%SelectedSave:~-4%
+IF "%IsZip%"==".zip" set SelectedSave=%SelectedSave:~0,-4%
+set SelectedSave=%SelectedSave%.zip
 
 IF EXIST "%ServerSaveFolder%\%SelectedSave%" (
-	set SaveFile=%SelectedSave%
-	goto startServer
+	goto saveContinue
 ) else (
-		IF EXIST "%ServerSaveFolder%\%SelectedSave%.zip" (
-		set SaveFile=%SelectedSave%.zip
-		goto startServer
-	)
-	echo Save file does not exist, please pick another save.
+	echo Save file does not exist, please continue to pick another save file.
+	pause
 	goto enterSave
 )
+:saveContinue
+::if the newest file is a autosave, rename it, this way it doesnt get overwritten when autosaving
+call :getDateTime
+set newSaveName=FST_AS_%dateTime%.zip
+set AutoSaveFile=%SelectedSave:~0,-4%
+echo %AutoSaveFile%
+set AutoSaveFile=%AutoSaveFile:~0,9%
+echo %SelectedSave%
+echo %AutoSaveFile%
+echo check
+IF "%AutoSaveFile%"=="_autosave" (
+	echo  Determined newest save file is an autosave file, renaming it to avoid conflicts
+	copy /y "%ServerSaveFolder%\%SelectedSave%" "%ServerSaveFolder%\%newSaveName%"
+	call :touch "%ServerSaveFolder%\%newSaveName%"
+	echo -------------------------------------------------------------------------------
+	echo  New name for your autosave file is: %newSaveName%
+	echo -------------------------------------------------------------------------------
+	timeout 2
+	goto startNewSave
+)
+set SaveFile=%SelectedSave%
+goto startServer
+
+:startNewSave
+set SaveFile=%newSaveName%
+goto startServer
 
 :latestSave
 ::for launching with the newest save file
@@ -1161,7 +1195,13 @@ set newSaveName=FST_AS_%dateTime%.zip
 IF "%AutoSaveFile%"=="_autosave" (
 	echo  Determined newest save file is an autosave file, renaming it to avoid conflicts
 	copy /y "%ServerSaveFolder%\%SaveFile%" "%ServerSaveFolder%\%newSaveName%"
+	call :touch "%ServerSaveFolder%\%newSaveName%"
 	set SaveFile=%newSaveName%
+	echo -------------------------------------------------------------------------------
+	echo  New name for your autosave file is: %newSaveName%
+	echo -------------------------------------------------------------------------------
+	timeout 2
+	goto startNewSave
 )
 
 echo -------------------------------------------------------------------------------
@@ -1227,6 +1267,7 @@ call :getDateTime
 set newSaveName=%SaveFileName%_%dateTime%.zip
 
 copy /y "%StandardSaveFolder%\%SelectedSPSave%" "%ServerSaveFolder%\%newSaveName%"
+call :touch "%ServerSaveFolder%\%newSaveName%"
 set SaveFile=%newSaveName%
 
 goto startServer
@@ -1253,6 +1294,7 @@ echo  Copying it and renaming it to: '%newSaveName%'
 echo -------------------------------------------------------------------------------
 echo.
 copy /y "%StandardSaveFolder%\%LatestSP%%LatestSPext%" "%ServerSaveFolder%\%newSaveName%"
+call :touch "%ServerSaveFolder%\%newSaveName%"
 set SaveFile=%newSaveName%
 
 IF "%SaveFile%"=="" set failed=Could not detect any save files you might need to run this as an administrator or create a new save file below&& call :errorEnd 1
@@ -1278,6 +1320,7 @@ IF NOT DEFINED CreateNewSaveName set CreateNewSaveName=FST_%dateTime%
 ::strip spaces replace with _
 set CreateNewSaveName=%CreateNewSaveName: =_%
 ::strip .zip if input
+set IsZip=
 set IsZip=%CreateNewSaveName:~-4%
 IF "%IsZip%"==".zip" set CreateNewSaveName=%CreateNewSaveName:~0,-4%
 ::strip . replace with _
