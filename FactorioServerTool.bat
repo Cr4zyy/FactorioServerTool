@@ -1176,6 +1176,7 @@ IF "%AutoSaveFile%"=="_autosave" (
 	goto startNewSave
 )
 set SaveFile=%SelectedSave%
+IF %FastStart%== 1 goto executeServer
 goto startServer
 
 :startNewSave
@@ -1423,6 +1424,7 @@ IF %ERRORLEVEL%== 2 start http://github.com/Cr4zyy/FactorioServerTool/&& goto ab
 IF %ERRORLEVEL%== 3 echo goto startServer
 
 :startServer
+set FastStart=0
 title Factorio Server Tool [ Options ]
 cls
 ::mod counter (or close enough)
@@ -1455,6 +1457,7 @@ for /l %%N in (%OptionDelay% -1 1) do (
 if %%N leq 1 goto :executeServer
 cls
 call :ascii
+
 echo.
 echo  Tell your friends to connect to ^(You can paste this, it's in your clipboard^!^):
 echo  %CurrIP%:%ServerPort%
@@ -1552,7 +1555,7 @@ echo.
 color 08
 pushd "%FactorioDir%"
 title Factorio Server Tool [ Server Running - CTRL+C to quit ]
-start /wait bin\%WinOS%\Factorio.exe --start-server "%SaveFile%" --autosave-interval %AutoSaveTimer% --autosave-slots %AutoSaveSlots% --latency-ms %Latency% -c "%ServerConfig%" %ExtraParams%&&timeout 2&&popd&&call :restartScript
+start /wait bin\%WinOS%\Factorio.exe --start-server "%SaveFile%" --autosave-interval %AutoSaveTimer% --autosave-slots %AutoSaveSlots% --latency-ms %Latency% -c "%ServerConfig%" %ExtraParams%&&popd&&call :restartScript
 goto end
 
 :restartScript
@@ -1578,14 +1581,17 @@ echo  [F]ast Restart the server, instant server start, no options.
 echo.
 echo  [L]ast Save Restart, as above, but with the newest save file.
 echo.
+echo  [S]elect Save Restart, same as a fast restart but will let you select a save
+echo.
 echo  [Q]uit.
 echo.
-choice /c:RFLQ /n /m "> [R]eload, [F]ast Restart, [L]ast Save Restart or [Q]uit"
+choice /c:RFLSQ /n /m "> [R]eload, [F]ast Restart, [L]ast Save, [S]elect Save or [Q]uit"
 
 IF %ERRORLEVEL%== 1 goto skip
 IF %ERRORLEVEL%== 2 goto executeServer
 IF %ERRORLEVEL%== 3 set FastStart=1&& goto latestSave
-IF %ERRORLEVEL%== 4 echo ----------------------------------QUITTING-------------------------------------
+IF %ERRORLEVEL%== 4 set FastStart=1&& goto enterSave
+IF %ERRORLEVEL%== 5 echo ----------------------------------QUITTING-------------------------------------
 cd /d %BatchDir%
 goto quickend
 
