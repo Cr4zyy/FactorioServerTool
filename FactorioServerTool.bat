@@ -74,9 +74,11 @@ exit /b 0
 
 ::updates modified date/time
 :touch
-if "%1"=="" goto:eof
-copy /b %1 +,, > NUL
-echo Updated time stamp.
+if "%2"=="" goto:eof
+pushd "%1"
+	copy /b "%2" +,, > NUL
+	echo         Updated time stamp.
+popd
 exit /b 0
 
 :skip
@@ -1176,7 +1178,7 @@ set AutoSaveFile=%AutoSaveFile:~0,9%
 IF "%AutoSaveFile%"=="_autosave" (
 	echo  Determined newest save file is an autosave file, renaming it to avoid conflicts
 	copy /y "%ServerSaveFolder%\%SelectedSave%" "%ServerSaveFolder%\%newSaveName%"
-	call :touch "%ServerSaveFolder%\%newSaveName%"
+	call :touch "%ServerSaveFolder%" "%newSaveName%"
 	echo -------------------------------------------------------------------------------
 	echo  New name for your autosave file is: %newSaveName%
 	echo -------------------------------------------------------------------------------
@@ -1203,9 +1205,10 @@ set AutoSaveFile=%AutoSaveFile:~0,9%
 call :getDateTime
 set newSaveName=FST_AS_%dateTime%.zip
 IF "%AutoSaveFile%"=="_autosave" (
+
 	echo  Determined newest save file is an autosave file, renaming it to avoid conflicts
 	copy /y "%ServerSaveFolder%\%SaveFile%" "%ServerSaveFolder%\%newSaveName%"
-	call :touch "%ServerSaveFolder%\%newSaveName%"
+	call :touch "%ServerSaveFolder%" "%newSaveName%"
 	set SaveFile=%newSaveName%
 	echo -------------------------------------------------------------------------------
 	echo  New name for your autosave file is: %newSaveName%
@@ -1278,7 +1281,7 @@ call :getDateTime
 set newSaveName=%SaveFileName%_%dateTime%.zip
 
 copy /y "%StandardSaveFolder%\%SelectedSPSave%" "%ServerSaveFolder%\%newSaveName%"
-call :touch "%ServerSaveFolder%\%newSaveName%"
+call :touch "%ServerSaveFolder%" "%newSaveName%"
 set SaveFile=%newSaveName%
 
 goto startServer
@@ -1293,7 +1296,6 @@ for /F "delims=" %%G in ('dir "%StandardSaveFolder%\*.zip" /b /od') do (
 )
 
 set LatestSP=%LatestSP:"=%
-
 ::append datetime to the filename to avoid conflicts
 call :getDateTime
 set newSaveName=%LatestSP%_%dateTime%%LatestSPext%
@@ -1305,7 +1307,7 @@ echo  Copying it and renaming it to: '%newSaveName%'
 echo -------------------------------------------------------------------------------
 echo.
 copy /y "%StandardSaveFolder%\%LatestSP%%LatestSPext%" "%ServerSaveFolder%\%newSaveName%"
-call :touch "%ServerSaveFolder%\%newSaveName%"
+call :touch "%ServerSaveFolder%" "%newSaveName%"
 
 set SaveFile=%newSaveName%
 
