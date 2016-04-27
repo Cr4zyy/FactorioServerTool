@@ -1,7 +1,7 @@
 @echo off 
 setlocal
-:: Factorio Server Tool v0.1.34
-:: 24/Apr/2016
+:: Factorio Server Tool v0.1.35
+:: 27/Apr/2016
 :: http://cr4zyb4st4rd.co.uk
 :: https://github.com/Cr4zyy/FactorioServerTool
 
@@ -82,7 +82,7 @@ popd
 exit /b 0
 
 :skip
-set vnumber=0.1.34
+set vnumber=0.1.35
 ::scale cmd to fit nicely
 mode con: cols=80 lines=60
 ::prettyness
@@ -194,10 +194,10 @@ echo ---------------------------------------------------------------------------
 echo.
 
 call :iniRead version cfgvnumber "%FST_ConfigDir%" "%FST_ConfigFile%"
-set /a cfgvnumber=cfgvnumber
 set intvnumber=%vnumber:.=%
 ::update cfg if higher version number
-IF %vnumber% GTR %cfgvnumber% (
+IF %intvnumber% GTR %cfgvnumber% (
+	echo  Updating config version number
 	call :iniWrite version %intvnumber% "%FST_Config%"
 )
 ::if cfg older than 0.1.31 write new values if they DONT exist!
@@ -1419,10 +1419,10 @@ echo ===========================================================================
 echo                                      ABOUT
 echo -------------------------------------------------------------------------------
 echo  Version: v%vnumber%
-echo  Dated: 24/Apr/2016
+echo  Dated: 27/Apr/2016
 echo  Author: Scott Coxhead
 echo.
-echo  Github: github.com/Cr4zyy/FactorioServerTool/
+echo  Find updates on Github: github.com/Cr4zyy/FactorioServerTool/
 echo.
 echo  Probably a script mess but it seems to work, for me. ^:D Hope it works for you.
 echo.
