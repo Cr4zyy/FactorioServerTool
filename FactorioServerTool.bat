@@ -74,9 +74,8 @@ exit /b 0
 
 ::updates modified date/time
 :touch
-if %1.==. goto:eof
-if not exist %1 goto:eof
-copy /b %1 +,, > nul
+if "%1"=="" goto:eof
+copy /b %1 +,, > NUL
 echo Updated time stamp.
 exit /b 0
 
@@ -352,6 +351,12 @@ echo ---------------------------------------------------------------------------
 echo                       Welcome to the Factorio Server Tool
 echo ------------------------------------------------------------------------------  
 echo.
+echo       Please make sure you have launched the Factorio game previously!
+echo      If you haven't played the game it will not create necessary files
+echo  Without files created by launching the game the tool can not set up a server
+echo.
+echo ------------------------------------------------------------------------------  
+echo.
 echo  Select where to save the config file for FST. 'FST_Config.ini'
 echo  Either the Appdata folder or the same directory as the FactorioServerTool.bat
 echo.
@@ -613,6 +618,8 @@ set failed=No Factorio data folder was found, you need to launch the game to cre
 call :errorEnd 0
 
 :saveData
+IF NOT EXIST "%DefaultConfig%" goto creatingConfigFail
+
 IF EXIST "%ServerSaveFolder%\*.zip" (
 	IF EXIST "%ServerConfig%" (
 		set ChangeSaveInterval=0
@@ -779,10 +786,11 @@ IF EXIST "%DefaultConfig%" goto creatingConfig
 IF NOT EXIST "%DefaultConfig%" goto creatingConfigFail
 
 :creatingConfig	
+call :getDateTime
 call :clearEL
 echo -------------------------------------------------------------------------------
 echo  Creating config.ini backup
-copy /y "%DefaultConfig%" "%FacCfg%\config-backup.ini" 
+copy /y "%DefaultConfig%" "%FacCfg%\config-backup_%dateTime%.ini" 
 echo  Creating config-server.ini
 copy "%DefaultConfig%" "%ServerConfig%" 
 echo -------------------------------------------------------------------------------
@@ -1298,7 +1306,9 @@ echo ---------------------------------------------------------------------------
 echo.
 copy /y "%StandardSaveFolder%\%LatestSP%%LatestSPext%" "%ServerSaveFolder%\%newSaveName%"
 call :touch "%ServerSaveFolder%\%newSaveName%"
+
 set SaveFile=%newSaveName%
+
 
 IF "%SaveFile%"=="" set failed=Could not detect any save files you might need to run this as an administrator or create a new save file below&& call :errorEnd 1
 
