@@ -1097,7 +1097,7 @@ echo ---------------------------------------------------------------------------
 echo  Writing config to file:
 echo  %FST_Config%
 echo -------------------------------------------------------------------------------
-
+IF NOT EXIST "%FST_Config%"	copy NUL "%FST_Config%"
 set InstallString=%InstallDir: =?%
 call :iniWrite InstallDir %InstallString% "%FST_Config%"
 call :iniWrite WinOS %WinOS% "%FST_Config%"
