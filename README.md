@@ -15,7 +15,7 @@ Factorio Server Tool
 * Puts the server IP:Port quickly into your clipboard at runtime
 * Batch can be run from any location
 
-Not affiliated with Factorio
+Not affiliated with Factorio or Wube Software
 
 ## Contact
 #### Cr4zy
@@ -24,3 +24,4 @@ Not affiliated with Factorio
 
 #### Factorio
 * http://factorio.com
+* http://store.steampowered.com/app/427520
