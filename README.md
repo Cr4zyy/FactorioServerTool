@@ -25,6 +25,7 @@ Not affiliated with Factorio or Wube Software
 #### Cr4zy
 * http://cr4zyb4st4rd.co.uk
 * Twitter: [@_Cr4zy](https://twitter.com/_Cr4zy "_Cr4zy on twitter")
+* [Forum thread](https://forums.factorio.com/viewtopic.php?f=133&t=23838 "Factorio forum thread")
 
 #### Factorio
 * http://factorio.com
