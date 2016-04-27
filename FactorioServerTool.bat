@@ -1297,7 +1297,7 @@ set LatestSP=%LatestSP:"=%
 ::append datetime to the filename to avoid conflicts
 call :getDateTime
 set newSaveName=%LatestSP%_%dateTime%%LatestSPext%
-IF "%newSaveName%"=="" set failed=Could not detect any save files you might need to run this as an administrator Or create a new save file below&& call :errorEnd 1
+IF "%LatestSP%"=="" set failed=Could not detect any save files you might need to run this as an administrator Or create a new save file below&& call :errorEnd 1
 echo.
 echo -------------------------------------------------------------------------------
 echo  Latest SP save file is: '%LatestSP%%LatestSPext%'
@@ -1564,7 +1564,7 @@ timeout 2
 echo.
 color 08
 pushd "%FactorioDir%"
-title Factorio Server Tool [ Server Running - CTRL+C to quit ]
+title Factorio Server Tool [ Server Running - CTRL+C to save and quit ]
 start /wait bin\%WinOS%\Factorio.exe --start-server "%SaveFile%" --autosave-interval %AutoSaveTimer% --autosave-slots %AutoSaveSlots% --latency-ms %Latency% -c "%ServerConfig%" %ExtraParams%&&popd&&call :restartScript
 goto end
 
