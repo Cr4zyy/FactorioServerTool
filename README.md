@@ -2,6 +2,8 @@ Factorio Server Tool
 ======
 **Factorio Server Tool** is a batch script to quickly and easily allow you to host a dedicated Factorio server on Windows
 
+![Factorio Server Tool GIF](http://i.imgur.com/aWNIrsK.gif)
+
 ## What it does
 * Can quickly find your install folder (Steam install only) (Supports user input directories too)
 * Write the server config file for you
