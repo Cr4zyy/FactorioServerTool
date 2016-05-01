@@ -697,7 +697,7 @@ IF %SPSaves%== 0 (
 ::create a new save file using --create	
 call :getDateTime
 set CreateSaveName=FST_%dateTime%.zip
-IF %CreateSave%== 1 "%FactorioDir%\bin\%WinOS%\Factorio.exe" --create %CreateSaveName%&& set SPSaves=1
+IF %CreateSave%== 1 "%FactorioDir%\bin\%WinOS%\Factorio.exe" --create %CreateSaveName%&& set SPSaves=2
 
 cls
 call :ascii
@@ -722,6 +722,7 @@ mkdir "%ServerModFolder%"
 
 IF %SPMods%== 1 xcopy /s /e /y "%StandardModFolder%" "%ServerModFolder%"
 IF %SPSaves%== 1 xcopy /s /e /y "%StandardSaveFolder%" "%ServerSaveFolder%"
+IF %SPSaves%== 2 move /y "%StandardSaveFolder%\%CreateSaveName%" "%ServerSaveFolder%"
 timeout 2
 cls
 
