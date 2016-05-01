@@ -38,6 +38,7 @@ set evalue=0
 
 ::make sure we're working with numbers here!
 set /a "num1=%1"
+IF ERRORLEVEL== 1 set GEOLEerror=1&& goto:eof
 set /a "num2=%2"
 set /a "num3=%3"
 IF %1 NEQ %num1% set GEOLEerror=1&& goto:eof
@@ -60,12 +61,15 @@ del %writeTemp%
 goto:eof
 
 ::Read the values from the ini config
+:: iniRead "STRING to READ" "VAR to SET" "DIR for FILE" "FILENAME"
 :iniRead
 pushd "%3"
+	set readOutput=
 	FOR /f "delims== tokens=2" %%i in ('findstr "%1=" "%4"') do set readOutput=%%i
-	::batch is atrocious so we're writing many values with spaces on the end unavoidably, this is to remove those...
-	set %2=%readOutput: =%
 popd
+	::batch is atrocious so we're writing many values with spaces on the end unavoidably, this is to remove those...
+IF "%readOutput%"=="" set %2=%readOutput%&& goto:eof
+set %2=%readOutput: =%
 goto:eof
 
 ::sets errorlevel to 0 properly
@@ -82,6 +86,7 @@ popd
 exit /b 0
 
 :skip
+call :clearEL
 set vnumber=0.1.35
 ::scale cmd to fit nicely
 mode con: cols=80 lines=60
@@ -260,11 +265,13 @@ set ServerFolder=%FacData%\server
 
 ::Check for 32/64 bit Install
 call :iniRead WinOS WinOS "%FST_ConfigDir%" "%FST_ConfigFile%"
+IF "%WinOS%"=="" set failed=%errorString1%&& call :errorFix WinOS 0
 IF EXIST "%FactorioDir%\bin\%WinOS%\Factorio.exe" echo Executable = OK
 IF NOT EXIST "%FactorioDir%\bin\%WinOS%\Factorio.exe" set failed=%errorString1%&& call :errorFix WinOS 0
 
 ::Check AutoSave Timer
 call :iniRead AutoSaveTimer AutoSaveTimer "%FST_ConfigDir%" "%FST_ConfigFile%"
+IF "%AutoSaveTimer%"=="" set failed=%errorString1%&& call :errorFix AutoSaveTimer 5
 call :GEOLE %AutoSaveTimer% 1 500
 IF %GEOLEvalue%== 1 echo AutoSaveTimer = OK
 IF %GEOLEvalue%== 0 set failed=%errorString1%&& call :errorFix AutoSaveTimer 5
@@ -272,6 +279,7 @@ IF %GEOLEerror%== 1 set failed=%errorString1%&& call :errorFix AutoSaveTimer 5
 
 ::Check AutoSave Slots
 call :iniRead AutoSaveSlots AutoSaveSlots "%FST_ConfigDir%" "%FST_ConfigFile%"
+IF "%AutoSaveSlots%"=="" set failed=%errorString1%&& call :errorFix AutoSaveSlots 3
 call :GEOLE %AutoSaveSlots% 1 500
 IF %GEOLEvalue%== 1 echo AutoSaveSlots = OK
 IF %GEOLEvalue%== 0 set failed=%errorString1%&& call :errorFix AutoSaveSlots 3
@@ -279,6 +287,7 @@ IF %GEOLEerror%== 1 set failed=%errorString1%&& call :errorFix AutoSaveSlots 3
 
 ::Check Latency
 call :iniRead Latency Latency "%FST_ConfigDir%" "%FST_ConfigFile%"
+IF "%Latency%"=="" set failed=%errorString1%&& call :errorFix Latency 100
 call :GEOLE %Latency% 1 5000
 IF %GEOLEvalue%== 1 echo Latency = OK
 IF %GEOLEvalue%== 0 set failed=%errorString1%&& call :errorFix Latency 100
@@ -286,6 +295,7 @@ IF %GEOLEerror%== 1 set failed=%errorString1%&& call :errorFix Latency 100
 
 ::Check Save Selection
 call :iniRead SaveSelection SaveSelection "%FST_ConfigDir%" "%FST_ConfigFile%"
+IF "%SaveSelection%"=="" set failed=%errorString1%&& call :errorFix SaveSelection 0
 call :GEOLE %SaveSelection% 0 1
 IF %GEOLEvalue%== 1 echo SaveSelection = OK
 IF %GEOLEvalue%== 0 set failed=%errorString1%&& call :errorFix SaveSelection 0
@@ -294,9 +304,9 @@ IF %GEOLEerror%== 1 set failed=%errorString1%&& call :errorFix SaveSelection 0
 ::Check Fast Start
 ::this value is not set by the batch but can be added as explained in the "About"
 call :iniRead FastStart FastStart "%FST_ConfigDir%" "%FST_ConfigFile%"
-IF %FastStart%==%FastStart: =% set FastStart=0
+IF "%FastStart%"=="" set failed=%errorString1%&& call :errorFix FastStart 0
 call :GEOLE %FastStart% 0 1
-IF %GEOLEvalue%== 1 ( IF %FastStart%== 1 echo FastStart = OK )
+IF %GEOLEvalue%== 1 IF %FastStart%== 1 echo FastStart = OK
 IF %GEOLEvalue%== 0 set failed=%errorString1%&& call :errorFix FastStart 0
 IF %GEOLEerror%== 1 set failed=%errorString1%&& call :errorFix FastStart 0
 
@@ -538,7 +548,7 @@ echo  Please enter the main Factorio Install Directory
 echo.
 echo  This is the top level Factorio directory, it contains all the sub folders
 echo.
-echo  e.g. C:\Program Files (x86)\Factorio
+echo  e.g. %PROGRAMFILES%\Factorio
 echo ------------------------------------------------------------------------------  
 echo.
 set /p InstallDir=
@@ -808,11 +818,12 @@ call :errorEnd 0
 call :iniRead read-data CurReadData "%FacCfg%" "%ServerConfigFile%"
 call :iniRead write-data CurWriteData "%FacCfg%" "%ServerConfigFile%"
 
+IF "%CurReadData%"=="" set failed=Could not set the variable 'CurWriteData' because when reading the file '%ServerConfigFile%' the string requested 'read-data' returned NUL&& goto errorEnd
+IF "%CurWriteData%"=="" set failed=Could not set the variable 'CurWriteData' because when reading the file '%ServerConfigFile%' the string requested 'write-data' returned NUL&& goto errorEnd
+
 type "%ServerConfig%" | find /v "[path]" > "%TempConfig%"
 type "%TempConfig%" | find /v "read-data=" > "%ServerConfig%"
 type "%ServerConfig%" | find /v "write-data=" > "%TempConfig%"
-
-copy /y "%TempConfig%" "%ServerConfig%"
 
 echo [path]>> "%TempFile%"
 echo read-data=%CurReadData%>> "%TempFile%"
@@ -822,6 +833,12 @@ type "%TempFile%" "%TempConfig%" > "%ServerConfig%"
 
 del "%TempConfig%"
 del "%TempFile%"
+
+:checkServerConfig
+::for some reason this has been failing to write correct config files for some people, so lets create an error if that occurs
+::and delete the created broken file
+call :iniRead write-data NewWriteData "%FacCfg%" "%ServerConfigFile%"
+IF "%NewWriteData%"=="write-data=\server" del "%FacCfg%\config-backup_%dateTime%.ini"&& del "%ServerConfig%"&& set failed=Failed to write correct data to config-server.ini this could be due to a permissions error or your config files are stored in %PROGRAMFILES% and writing files there isn't possible&& goto errorEnd
 
 set ChangePortNumber=0
 
@@ -1597,16 +1614,78 @@ echo  [S]elect Save Restart, same as a fast restart but will let you select a sa
 echo.
 echo  [Q]uit.
 echo.
-choice /c:RFLSQ /n /m "> [R]eload, [F]ast Restart, [L]atest Save, [S]elect Save or [Q]uit"
+choice /c:RFLSEQ /n /m "> [R]eload, [F]ast Restart, [L]atest Save, [S]elect Save or [Q]uit"
 
 IF %ERRORLEVEL%== 1 goto skip
 IF %ERRORLEVEL%== 2 goto executeServer
 IF %ERRORLEVEL%== 3 set FastStart=1&& goto latestSave
 IF %ERRORLEVEL%== 4 set FastStart=1&& goto enterSave
-IF %ERRORLEVEL%== 5 echo ----------------------------------QUITTING-------------------------------------
+IF %ERRORLEVEL%== 5 goto writeErrorLog
+IF %ERRORLEVEL%== 6 echo ----------------------------------QUITTING-------------------------------------
 cd /d %BatchDir%
 goto quickend
 
+:writeErrorLog
+:: when server exits maybe stuff errors due to server not starting, so append information onto the end of the latest log file
+:: that tells us the FST config and other important stuff to solve errors easily
+echo -------------------------------WRITING TO LOG----------------------------------
+copy /y "%ServerFolder%\factorio-current.log" "%ServerFolder%\factorio-server-latest.log"
+set FactorioCurLog="%ServerFolder%\factorio-server-latest.log"
+echo ---------------------------------------------------------------------- >> "%FactorioCurLog%"
+echo --------------------------FactorioServerTool-------------------------- >> "%FactorioCurLog%"
+echo ----Variables for FST to function, written to log incase of errors---- >> "%FactorioCurLog%"
+echo ---------------------------------------------------------------------- >> "%FactorioCurLog%"
+call :getDateTime
+call :iniRead version Debug001 "%FST_ConfigDir%" "%FST_ConfigFile%"
+call :iniRead InstallDir Debug002 "%FST_ConfigDir%" "%FST_ConfigFile%"
+call :iniRead WinOS Debug003 "%FST_ConfigDir%" "%FST_ConfigFile%"
+call :iniRead FacData Debug004 "%FST_ConfigDir%" "%FST_ConfigFile%"
+call :iniRead FacConfig Debug005 "%FST_ConfigDir%" "%FST_ConfigFile%"
+call :iniRead SetupComplete Debug006 "%FST_ConfigDir%" "%FST_ConfigFile%"
+call :iniRead FastStart Debug007 "%FST_ConfigDir%" "%FST_ConfigFile%"
+call :iniRead AutoSaveTimer Debug008 "%FST_ConfigDir%" "%FST_ConfigFile%"
+call :iniRead AutoSaveSlots Debug009 "%FST_ConfigDir%" "%FST_ConfigFile%"
+call :iniRead Latency Debug010 "%FST_ConfigDir%" "%FST_ConfigFile%"
+call :iniRead SaveSelection Debug011 "%FST_ConfigDir%" "%FST_ConfigFile%"
+call :iniRead ExtraParams Debug012 "%FST_ConfigDir%" "%FST_ConfigFile%"
+call :iniRead read-data Debug013 "%FacCfg%" "%ServerConfigFile%"
+call :iniRead write-data Debug014 "%FacCfg%" "%ServerConfigFile%"
+call :iniRead port Debug015 "%FacCfg%" "%ServerConfigFile%"
+call :iniRead read-data Debug016 "%FacCfg%" "config.ini"
+call :iniRead write-data Debug017 "%FacCfg%" "config.ini"
+call :iniRead port Debug018 "%FacCfg%" "config.ini"
+echo Writing FST_Config.ini details...
+echo Date-Time     :: %dateTime% >>"%FactorioCurLog%"
+echo ----- FST_Config.ini ----- >>"%FactorioCurLog%"
+echo FST_Version   :: %Debug001% >>"%FactorioCurLog%"
+echo InstallDir    :: %Debug002% >>"%FactorioCurLog%"
+echo WinOS         :: %Debug003% >>"%FactorioCurLog%"
+echo FacData       :: %Debug004% >>"%FactorioCurLog%"
+echo FacConfig     :: %Debug005% >>"%FactorioCurLog%"
+echo SetupComplete :: %Debug006% >>"%FactorioCurLog%"
+echo FastStart     :: %Debug007% >>"%FactorioCurLog%"
+echo AutoSaveTimer :: %Debug008% >>"%FactorioCurLog%"
+echo AutoSaveSlots :: %Debug009% >>"%FactorioCurLog%"
+echo Latency       :: %Debug010% >>"%FactorioCurLog%"
+echo SaveSelection :: %Debug011% >>"%FactorioCurLog%"
+echo ExtraParams   :: %Debug012% >>"%FactorioCurLog%"
+echo Writing config-server.ini details...
+echo ---- config-server.ini ---- >>"%FactorioCurLog%"
+echo read-data     :: %Debug013% >>"%FactorioCurLog%"
+echo write-data    :: %Debug014% >>"%FactorioCurLog%"
+echo port          :: %Debug015% >>"%FactorioCurLog%"
+echo Writing config.ini details...
+echo ------- config.ini ------- >>"%FactorioCurLog%"
+echo read-data     :: %Debug016% >>"%FactorioCurLog%"
+echo write-data    :: %Debug017% >>"%FactorioCurLog%"
+echo port          :: %Debug018% >>"%FactorioCurLog%"
+echo.
+echo This tool will open the error log, this contains both your latest server log and the config settings that are important
+%FactorioCurLog%
+pause
+echo ----------------------------------QUITTING-------------------------------------
+cd /d %BatchDir%
+goto quickend
 
 
 :errorASCII
