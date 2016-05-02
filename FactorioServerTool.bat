@@ -1,7 +1,7 @@
 @echo off 
 setlocal
-:: Factorio Server Tool v0.1.35
-:: 27/Apr/2016
+:: Factorio Server Tool v0.1.36
+:: 02/May/2016
 :: http://cr4zyb4st4rd.co.uk
 :: https://github.com/Cr4zyy/FactorioServerTool
 
@@ -32,6 +32,7 @@ goto:eof
 
 :: %2 > or eq to %1 < or eq to %3
 :GEOLE
+call :clearEL
 set GEOLEvalue=0
 set GEOLEerror=0
 set evalue=0
@@ -87,7 +88,7 @@ exit /b 0
 
 :skip
 call :clearEL
-set vnumber=0.1.35
+set vnumber=0.1.36
 ::scale cmd to fit nicely
 mode con: cols=80 lines=60
 ::prettyness
@@ -197,7 +198,6 @@ echo  Reading config options from file:
 echo  %FST_Config%
 echo ------------------------------------------------------------------------------  
 echo.
-
 call :iniRead version cfgvnumber "%FST_ConfigDir%" "%FST_ConfigFile%"
 set intvnumber=%vnumber:.=%
 ::update cfg if higher version number
@@ -306,7 +306,7 @@ IF %GEOLEerror%== 1 set failed=%errorString1%&& call :errorFix SaveSelection 0
 call :iniRead FastStart FastStart "%FST_ConfigDir%" "%FST_ConfigFile%"
 IF "%FastStart%"=="" set failed=%errorString1%&& call :errorFix FastStart 0
 call :GEOLE %FastStart% 0 1
-IF %GEOLEvalue%== 1 IF %FastStart%== 1 echo FastStart = OK
+IF %GEOLEvalue%== 1 IF %FastStart%== 1 ( echo FastStart = OK ) else ( echo FastStart = NO )
 IF %GEOLEvalue%== 0 set failed=%errorString1%&& call :errorFix FastStart 0
 IF %GEOLEerror%== 1 set failed=%errorString1%&& call :errorFix FastStart 0
 
@@ -341,7 +341,10 @@ IF %ERRORLEVEL%== 0 (
 )
 echo ExtraParams = NONE
 :ParamsChecked
-echo.
+
+call :iniRead write-data CheckWriteData "%FacCfg%" "%ServerConfigFile%"
+IF "%CheckWriteData%"=="\server" del "%ServerConfig%"&& set failed=Failed to write correct data to config-server.ini this could be due to a permissions error or your config files are stored in %PROGRAMFILES% and writing files there isn't possible&& goto errorEnd
+echo Server Data = OK
 echo.
 ::do Fast Start bypass
 IF %FastStart%== 1 goto latestSave
@@ -368,6 +371,10 @@ echo      If you haven't played the game it will not create necessary files
 echo  Without files created by launching the game the tool can not set up a server
 echo.
 echo ------------------------------------------------------------------------------  
+
+::If a config file already exists, dont select a location for a new one.
+IF EXIST "%FST_Config%" goto findSteam
+
 echo.
 echo  Select where to save the config file for FST. 'FST_Config.ini'
 echo  Either the Appdata folder or the same directory as the FactorioServerTool.bat
@@ -380,7 +387,7 @@ echo  %BatchDir%
 echo.
 echo  You can move the ini file between the appdata folder and the batch directory
 echo.
-echo  However if a ini exists in the same directory it will be the file used
+echo  However if a ini exists in the batch file directory it will be the file used
 echo.
 echo ------------------------------------------------------------------------------  
 echo.
@@ -421,10 +428,11 @@ IF NOT EXIST "%FST_Config%" (
 		pause
 		goto setupBatch
 	)
+	::delete it after empty file inteferes with some checks
+	del %FST_Config%
 )
-::delete it after empty file inteferes with some checks
-del %FST_Config%
 
+:findSteam
 cls 
 call :ascii
 echo ------------------------------------------------------------------------------
@@ -839,7 +847,7 @@ del "%TempFile%"
 ::for some reason this has been failing to write correct config files for some people, so lets create an error if that occurs
 ::and delete the created broken file
 call :iniRead write-data NewWriteData "%FacCfg%" "%ServerConfigFile%"
-IF "%NewWriteData%"=="write-data=\server" del "%FacCfg%\config-backup_%dateTime%.ini"&& del "%ServerConfig%"&& set failed=Failed to write correct data to config-server.ini this could be due to a permissions error or your config files are stored in %PROGRAMFILES% and writing files there isn't possible&& goto errorEnd
+IF "%NewWriteData%"=="\server" del "%FacCfg%\config-backup_%dateTime%.ini"&& del "%ServerConfig%"&& set failed=Failed to write correct data to config-server.ini this could be due to a permissions error or your config files are stored in %PROGRAMFILES% and writing files there isn't possible&& goto errorEnd
 
 set ChangePortNumber=0
 
@@ -1437,7 +1445,7 @@ echo ===========================================================================
 echo                                      ABOUT
 echo -------------------------------------------------------------------------------
 echo  Version: v%vnumber%
-echo  Dated: 27/Apr/2016
+echo  Dated: 02/May/2016
 echo  Author: Scott Coxhead
 echo.
 echo  Find updates on Github: github.com/Cr4zyy/FactorioServerTool/
@@ -1637,6 +1645,7 @@ echo --------------------------FactorioServerTool-------------------------- >> "
 echo ----Variables for FST to function, written to log incase of errors---- >> "%FactorioCurLog%"
 echo ---------------------------------------------------------------------- >> "%FactorioCurLog%"
 call :getDateTime
+echo Reading FST_Config.ini details...
 call :iniRead version Debug001 "%FST_ConfigDir%" "%FST_ConfigFile%"
 call :iniRead InstallDir Debug002 "%FST_ConfigDir%" "%FST_ConfigFile%"
 call :iniRead WinOS Debug003 "%FST_ConfigDir%" "%FST_ConfigFile%"
@@ -1649,12 +1658,15 @@ call :iniRead AutoSaveSlots Debug009 "%FST_ConfigDir%" "%FST_ConfigFile%"
 call :iniRead Latency Debug010 "%FST_ConfigDir%" "%FST_ConfigFile%"
 call :iniRead SaveSelection Debug011 "%FST_ConfigDir%" "%FST_ConfigFile%"
 call :iniRead ExtraParams Debug012 "%FST_ConfigDir%" "%FST_ConfigFile%"
+echo Reading config-server.ini details...
 call :iniRead read-data Debug013 "%FacCfg%" "%ServerConfigFile%"
 call :iniRead write-data Debug014 "%FacCfg%" "%ServerConfigFile%"
 call :iniRead port Debug015 "%FacCfg%" "%ServerConfigFile%"
+echo Reading config.ini details...
 call :iniRead read-data Debug016 "%FacCfg%" "config.ini"
 call :iniRead write-data Debug017 "%FacCfg%" "config.ini"
 call :iniRead port Debug018 "%FacCfg%" "config.ini"
+echo.
 echo Writing FST_Config.ini details...
 echo Date-Time     :: %dateTime% >>"%FactorioCurLog%"
 echo ----- FST_Config.ini ----- >>"%FactorioCurLog%"
