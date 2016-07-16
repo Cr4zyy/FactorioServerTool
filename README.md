@@ -2,7 +2,8 @@ Factorio Server Tool
 ======
 **Factorio Server Tool** is a batch script to quickly and easily allow you to host a dedicated Factorio server on Windows
 
-**Download the latest build: [v0.1.36](https://github.com/Cr4zyy/FactorioServerTool/archive/0.1.36.zip "Latest build")** - 06/May/2016
+**Download the latest build: [v0.1.37](https://github.com/Cr4zyy/FactorioServerTool/archive/0.1.37.zip "Latest build")** - 16/July/2016
+Tested with Factorio Version 0.13.9
 
 
 Preview of the setup wizard: 
