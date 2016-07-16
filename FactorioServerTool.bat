@@ -1,7 +1,7 @@
 @echo off 
 setlocal
-:: Factorio Server Tool v0.1.36
-:: 02/May/2016
+:: Factorio Server Tool v0.1.37
+:: 16/July/2016
 :: http://cr4zyb4st4rd.co.uk
 :: https://github.com/Cr4zyy/FactorioServerTool
 
@@ -88,7 +88,7 @@ exit /b 0
 
 :skip
 call :clearEL
-set vnumber=0.1.36
+set vnumber=0.1.37
 ::scale cmd to fit nicely
 mode con: cols=80 lines=60
 ::prettyness
@@ -624,6 +624,18 @@ set StandardModFolder=%FacData%\mods
 set ServerFolder=%FacData%\server
 ::save facdata to ini for next runs
 
+::tell the user where the files are
+echo Located default locations at:
+echo %DefaultConfig%
+echo %ServerConfig%
+
+echo %ServerSaveFolder%
+echo %ServerModFolder%
+echo %StandardSaveFolder%
+echo %StandardModFolder%
+echo ------------------------------------------------------------------------------
+
+
 IF EXIST "%FacData%" (
 	goto saveData
 ) else (
@@ -656,7 +668,7 @@ echo ---------------------------------------------------------------------------
 echo  You have no server data files, you will need to create them.
 echo ------------------------------------------------------------------------------  
 echo.
-choice /c:YN /n /m ">Would you like to create the server folders? [Y/N]"
+choice /c:YN /n /m ">Would you like to create the server files and folders? [Y/N]"
 IF %ERRORLEVEL%== 1 goto createServerDir
 IF %ERRORLEVEL%== 2 set failed=You opted to not create server files! Without them this tool can not operate&& call :errorEnd 0
 
@@ -705,7 +717,9 @@ IF %SPSaves%== 0 (
 ::create a new save file using --create	
 call :getDateTime
 set CreateSaveName=FST_%dateTime%.zip
+pushd %StandardSaveFolder%
 IF %CreateSave%== 1 "%FactorioDir%\bin\%WinOS%\Factorio.exe" --create %CreateSaveName%&& set SPSaves=2
+popd
 
 cls
 call :ascii
@@ -1386,9 +1400,9 @@ echo.
 echo  Creating save file: %CreateNewSaveName%
 echo.
 echo -------------------------------------------------------------------------------
-
+pushd %StandardSaveFolder%
 "%FactorioDir%\bin\%WinOS%\Factorio.exe" --create "%CreateNewSaveName%"
-
+popd
 echo -------------------------------------------------------------------------------
 echo.
 echo  Moving save file to server directory
@@ -1445,7 +1459,7 @@ echo ===========================================================================
 echo                                      ABOUT
 echo -------------------------------------------------------------------------------
 echo  Version: v%vnumber%
-echo  Dated: 02/May/2016
+echo  Dated: 16/July/2016
 echo  Author: Scott Coxhead
 echo.
 echo  Find updates on Github: github.com/Cr4zyy/FactorioServerTool/
@@ -1593,7 +1607,7 @@ echo.
 color 08
 pushd "%FactorioDir%"
 title Factorio Server Tool [ Server Running - CTRL+C to save and quit ]
-start /wait bin\%WinOS%\Factorio.exe --start-server "%SaveFile%" --autosave-interval %AutoSaveTimer% --autosave-slots %AutoSaveSlots% --latency-ms %Latency% -c "%ServerConfig%" %ExtraParams%&&popd&&call :restartScript
+start /wait bin\%WinOS%\Factorio.exe --start-server "%ServerSaveFolder%\%SaveFile%" --autosave-interval %AutoSaveTimer% --autosave-slots %AutoSaveSlots% --latency-ms %Latency% -c "%ServerConfig%" %ExtraParams%&&popd&&call :restartScript
 goto end
 
 :restartScript
@@ -1754,7 +1768,9 @@ echo  [E]xit this without creating a new save.
 echo.
 choice /c:CE /n /d:E /t:20 /m "[C]reate or [E]xit"
 IF %ERRORLEVEL%== 1 (	
+	pushd %StandardSaveFolder%
 	"%FactorioDir%\bin\%WinOS%\Factorio.exe" --create FST_newsave%1.zip
+	popd
 	timeout 1
 	mkdir "%ServerSaveFolder%"
 	move /y "%StandardSaveFolder%\FST_newsave%1.zip" "%ServerSaveFolder%"
