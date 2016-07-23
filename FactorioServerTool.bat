@@ -1,7 +1,7 @@
 @echo off 
 setlocal
-:: Factorio Server Tool v0.1.37
-:: 16/July/2016
+:: Factorio Server Tool v0.1.38
+:: 23/July/2016
 :: http://cr4zyb4st4rd.co.uk
 :: https://github.com/Cr4zyy/FactorioServerTool
 
@@ -86,9 +86,18 @@ pushd "%1"
 popd
 exit /b 0
 
+::checks for running process
+:procfind
+call :clearEL
+tasklist /FI "IMAGENAME eq %1" 2>NUL | find /I /N "%1">NUL
+if "%ERRORLEVEL%"=="0" set %2=1
+call :clearEL
+goto:eof
+
+
 :skip
 call :clearEL
-set vnumber=0.1.37
+set vnumber=0.1.38
 ::scale cmd to fit nicely
 mode con: cols=80 lines=60
 ::prettyness
@@ -101,6 +110,7 @@ cls
 ::variables
 set BatchDir=%~dp0
 set FSTbat=%~f0
+set ProcBool=0
 
 ::FactorioServerTool files
 set FST_Config=%appdata%\Factorio\FST_Config.ini
@@ -625,7 +635,7 @@ set ServerFolder=%FacData%\server
 ::save facdata to ini for next runs
 
 ::tell the user where the files are
-echo Located default locations at:
+echo Default locations at:
 echo %DefaultConfig%
 echo %ServerConfig%
 
@@ -674,6 +684,13 @@ IF %ERRORLEVEL%== 2 set failed=You opted to not create server files! Without the
 
 
 :createServerDir
+::make the directories before we do anything with them to avoid all kinds of wonderful errors
+IF NOT EXIST "%ServerFolder%" mkdir "%ServerFolder%"
+IF NOT EXIST "%ServerSaveFolder%" mkdir "%ServerSaveFolder%"
+IF NOT EXIST "%ServerModFolder%" mkdir "%ServerModFolder%"
+IF NOT EXIST "%StandardSaveFolder%" mkdir "%StandardSaveFolder%"
+IF NOT EXIST "%StandardModFolder%" mkdir "%StandardModFolder%"
+
 cls
 call :ascii
 echo -------------------------------------------------------------------------------
@@ -708,6 +725,7 @@ IF %ERRORLEVEL%== 2 set CreateSave=2&& goto saveCreateDone
 
 
 :saveCreateDone
+call :clearEL
 IF %SPSaves%== 0 (
 	IF %CreateSave%== 2 (
 		set failed=You chose to not copy current SP saves or to create a new one.  Without a save file the server can not start.
@@ -717,9 +735,30 @@ IF %SPSaves%== 0 (
 ::create a new save file using --create	
 call :getDateTime
 set CreateSaveName=FST_%dateTime%.zip
+call :procfind factorio.exe ProcBool
+call :clearEL
+IF %ProcBool%== 1 (
+	echo ------------------------------------------------------------------------------ 
+	echo  Warning: Detected Factorio.exe is running!
+	echo  please close any instances of Factorio and continue.
+	echo  If Factorio is running you won't be able to create a new save file.
+	echo ------------------------------------------------------------------------------ 
+	choice /c:C /n /m ">If you have closed Factorio.exe please [C]ontinue"
+)
+
 pushd %StandardSaveFolder%
-IF %CreateSave%== 1 "%FactorioDir%\bin\%WinOS%\Factorio.exe" --create %CreateSaveName%&& set SPSaves=2
+	echo %cd%
+	pause
+	IF %CreateSave%== 1 "%FactorioDir%\bin\%WinOS%\Factorio.exe" --create %CreateSaveName%&& set SPSaves=2
 popd
+IF NOT EXIST "%StandardSaveFolder%\%CreateSaveName%" (
+	echo ------------------------------------------------------------------------------ 
+	echo  FST could not locate the created save file, you can [R]etry or [Q]uit
+	echo ------------------------------------------------------------------------------ 
+	choice /c:RQ /n /m ">Retry or Quit? [R/Q]"
+	IF %ERRORLEVEL%== 1 goto saveCreateDone
+	IF %ERRORLEVEL%== 2 set failed=The tool failed to create a new save file and you chose to quit you can retry or create a single player save file first and use that&& goto errorEnd
+)
 
 cls
 call :ascii
@@ -737,10 +776,6 @@ echo  Copying files to server directory
 echo.
 echo -------------------------------------------------------------------------------
 echo.
-::make the directories before we use xcopy otherwise it promts about file/directory type and that's annoying
-mkdir "%ServerFolder%"
-mkdir "%ServerSaveFolder%"
-mkdir "%ServerModFolder%"
 
 IF %SPMods%== 1 xcopy /s /e /y "%StandardModFolder%" "%ServerModFolder%"
 IF %SPSaves%== 1 xcopy /s /e /y "%StandardSaveFolder%" "%ServerSaveFolder%"
@@ -1400,9 +1435,31 @@ echo.
 echo  Creating save file: %CreateNewSaveName%
 echo.
 echo -------------------------------------------------------------------------------
+
+call :clearEL
+call :procfind "Factorio.exe" ProcBool
+call :clearEL
+IF %ProcBool%== 1 (
+	echo ------------------------------------------------------------------------------ 
+	echo  Warning: Detected Factorio.exe is running please close any instances of Factorio and continue.
+	echo  If Factorio is running you won't be able to create a new save file.
+	echo ------------------------------------------------------------------------------ 
+	choice /c:C /n /m ">If you have closed Factorio.exe please [C]ontinue"
+)
+
 pushd %StandardSaveFolder%
-"%FactorioDir%\bin\%WinOS%\Factorio.exe" --create "%CreateNewSaveName%"
+	"%FactorioDir%\bin\%WinOS%\Factorio.exe" --create "%CreateNewSaveName%"
 popd
+
+IF NOT EXIST "%StandardSaveFolder%\%CreateNewSaveName%" (
+	echo ------------------------------------------------------------------------------ 
+	echo  FST could not locate the created save file, you can [R]etry or [Q]uit
+	echo ------------------------------------------------------------------------------ 
+	choice /c:RQ /n /m ">Retry or Quit? [R/Q]"
+	IF %ERRORLEVEL%== 1 goto makeNewSaveFile
+	IF %ERRORLEVEL%== 2 set failed=The tool failed to create a new save file and you chose to quit you can retry or create a single player save file first and use that&& goto errorEnd
+)
+
 echo -------------------------------------------------------------------------------
 echo.
 echo  Moving save file to server directory
@@ -1459,7 +1516,7 @@ echo ===========================================================================
 echo                                      ABOUT
 echo -------------------------------------------------------------------------------
 echo  Version: v%vnumber%
-echo  Dated: 16/July/2016
+echo  Dated: 23/July/2016
 echo  Author: Scott Coxhead
 echo.
 echo  Find updates on Github: github.com/Cr4zyy/FactorioServerTool/
@@ -1768,9 +1825,31 @@ echo  [E]xit this without creating a new save.
 echo.
 choice /c:CE /n /d:E /t:20 /m "[C]reate or [E]xit"
 IF %ERRORLEVEL%== 1 (	
+
+	call :clearEL
+	call :procfind "Factorio.exe" ProcBool
+	call :clearEL
+	IF %ProcBool%== 1 (
+		echo ------------------------------------------------------------------------------ 
+		echo  Warning: Detected Factorio.exe is running please close any instances of Factorio and continue.
+		echo  If Factorio is running you won't be able to create a new save file.
+		echo ------------------------------------------------------------------------------ 
+		choice /c:C /n /m ">If you have closed Factorio.exe please [C]ontinue"
+	)
+
 	pushd %StandardSaveFolder%
-	"%FactorioDir%\bin\%WinOS%\Factorio.exe" --create FST_newsave%1.zip
+		"%FactorioDir%\bin\%WinOS%\Factorio.exe" --create FST_newsave%1.zip
 	popd
+	
+	IF NOT EXIST "%StandardSaveFolder%\FST_newsave%1.zip" (
+		echo ------------------------------------------------------------------------------ 
+		echo  FST could not locate the created save file, you can [R]etry or [Q]uit
+		echo ------------------------------------------------------------------------------ 
+		choice /c:RQ /n /m ">Retry or Quit? [R/Q]"
+		IF %ERRORLEVEL%== 1 cls&& call :errorNewSave %random%
+		IF %ERRORLEVEL%== 2 set failed=The tool failed to create a new save file and you chose to quit you can retry or create a single player save file first and use that&& goto errorEnd
+	)
+	
 	timeout 1
 	mkdir "%ServerSaveFolder%"
 	move /y "%StandardSaveFolder%\FST_newsave%1.zip" "%ServerSaveFolder%"
