@@ -1,7 +1,7 @@
 @echo off 
 setlocal
-:: Factorio Server Tool v0.1.38
-:: 23/July/2016
+:: Factorio Server Tool v0.1.40
+:: 02/April/2017
 :: http://cr4zyb4st4rd.co.uk
 :: https://github.com/Cr4zyy/FactorioServerTool
 
@@ -97,7 +97,7 @@ goto:eof
 
 :skip
 call :clearEL
-set vnumber=0.1.38
+set vnumber=0.1.40
 ::scale cmd to fit nicely
 mode con: cols=80 lines=60
 ::prettyness
@@ -154,6 +154,11 @@ IF NOT EXIST "%temp%\Factorio" (
 	set writeTemp=%temp%\Factorio\writeTemp.tmp
 	set TempLib=%temp%\Factorio\TempLib.tmp
 )
+::Delete all temp files on launch 
+IF EXIST "%TempConfig%" del "%TempConfig%"
+IF EXIST "%TempFile%" del "%TempFile%"
+IF EXIST "%writeTemp%" del "%writeTemp%"
+IF EXIST "%TempLib%" del "%TempLib%"
 
 :: Default FST settings/options
 :: Used incase of resets etc
@@ -183,8 +188,8 @@ set intvnumber=%vnumber:.=%
 ::if cfg older than 0.1.31 write new values if they DONT exist!
 IF %cfgvnumber% LEQ 0131 (
 	echo ------------------------------------------------------------------------------  
-	echo  NOTE! If you were using an older version due to changes in making this tool
-	echo  work across other Windows locale installs the tool could quit without error
+	echo  NOTE! If you were using an older version due to changes in the script it is 
+    echo  possible that it may quit without an error.
 	echo.
 	echo  If that is the case you may have to delete the config file for the tool which
 	echo  is located at: %FST_Config%
@@ -280,7 +285,8 @@ IF EXIST "%FactorioDir%\bin\%WinOS%\Factorio.exe" echo Executable = OK
 IF NOT EXIST "%FactorioDir%\bin\%WinOS%\Factorio.exe" set failed=%errorString1%&& call :errorFix WinOS 0
 
 ::Check AutoSave Timer
-call :iniRead AutoSaveTimer AutoSaveTimer "%FST_ConfigDir%" "%FST_ConfigFile%"
+::call :iniRead AutoSaveTimer AutoSaveTimer "%FST_ConfigDir%" "%FST_ConfigFile%"
+call :iniRead autosave_interval AutoSaveTimer "%FacCfg%" "%ServerConfigFile%"
 IF "%AutoSaveTimer%"=="" set failed=%errorString1%&& call :errorFix AutoSaveTimer 5
 call :GEOLE %AutoSaveTimer% 1 500
 IF %GEOLEvalue%== 1 echo AutoSaveTimer = OK
@@ -288,7 +294,8 @@ IF %GEOLEvalue%== 0 set failed=%errorString1%&& call :errorFix AutoSaveTimer 5
 IF %GEOLEerror%== 1 set failed=%errorString1%&& call :errorFix AutoSaveTimer 5
 
 ::Check AutoSave Slots
-call :iniRead AutoSaveSlots AutoSaveSlots "%FST_ConfigDir%" "%FST_ConfigFile%"
+::call :iniRead AutoSaveSlots AutoSaveSlots "%FST_ConfigDir%" "%FST_ConfigFile%"
+call :iniRead autosave_slots AutoSaveSlots "%FacCfg%" "%ServerConfigFile%"
 IF "%AutoSaveSlots%"=="" set failed=%errorString1%&& call :errorFix AutoSaveSlots 3
 call :GEOLE %AutoSaveSlots% 1 500
 IF %GEOLEvalue%== 1 echo AutoSaveSlots = OK
@@ -296,7 +303,8 @@ IF %GEOLEvalue%== 0 set failed=%errorString1%&& call :errorFix AutoSaveSlots 3
 IF %GEOLEerror%== 1 set failed=%errorString1%&& call :errorFix AutoSaveSlots 3
 
 ::Check Latency
-call :iniRead Latency Latency "%FST_ConfigDir%" "%FST_ConfigFile%"
+::call :iniRead Latency Latency "%FST_ConfigDir%" "%FST_ConfigFile%"
+call :iniRead minimum_latency_in_multiplayer Latency "%FacCfg%" "%ServerConfigFile%"
 IF "%Latency%"=="" set failed=%errorString1%&& call :errorFix Latency 100
 call :GEOLE %Latency% 1 5000
 IF %GEOLEvalue%== 1 echo Latency = OK
@@ -968,7 +976,8 @@ call :ascii
 :setSaveTimercls
 ::get current value if available
 IF EXIST "%FST_Config%" (
-	call :iniRead AutoSaveTimer CurSaveInt "%FST_ConfigDir%" "%FST_ConfigFile%"
+	::call :iniRead AutoSaveTimer CurSaveInt "%FST_ConfigDir%" "%FST_ConfigFile%"
+	call :iniRead autosave_interval CurSaveInt ""%FacCfg%" "%ServerConfigFile%"
 ) else (
 	set CurSaveInt=-NOT SET OR FOUND-
 )
@@ -1010,8 +1019,8 @@ IF %ChangeSaveInterval%== 1 (
 	echo  Writing config file:
 	echo  %FST_Config%
 	echo -------------------------------------------------------------------------------
-	call :iniWrite AutoSaveTimer %AutoSaveTimer% "%FST_Config%"
-	
+	::call :iniWrite AutoSaveTimer %AutoSaveTimer% "%FST_Config%"
+	call :iniWrite autosave_interval %AutoSaveTimer% "%ServerConfig%"	
 	IF %ERRORLEVEL%== 1 goto setSaveSlots
 
 )
@@ -1023,7 +1032,8 @@ call :ascii
 :setSaveSlotscls
 ::get current value if available
 IF EXIST "%FST_Config%" (
-	call :iniRead AutoSaveSlots CurSaveSlot "%FST_ConfigDir%" "%FST_ConfigFile%"
+	::call :iniRead AutoSaveSlots CurSaveSlot "%FST_ConfigDir%" "%FST_ConfigFile%"
+	call :iniRead autosave_slots CurSaveSlot "%FacCfg%" "%ServerConfigFile%"
 ) else (
 	set CurSaveSlot=-NOT SET OR FOUND-
 )
@@ -1066,7 +1076,8 @@ IF %ChangeSaveInterval%==1 (
 	echo  Writing config file:
 	echo  %FST_Config%
 	echo -------------------------------------------------------------------------------
-	call :iniWrite AutoSaveSlots %AutoSaveSlots% "%FST_Config%"
+	::call :iniWrite AutoSaveSlots %AutoSaveSlots% "%FST_Config%"
+	call :iniWrite autosave_slots %AutoSaveSlots% "%ServerConfig%"
 	
 	IF %ERRORLEVEL%== 1 goto startServer
 )
@@ -1078,7 +1089,8 @@ call :ascii
 :setLatencycls
 ::get current value if available
 IF EXIST "%FST_Config%" (
-	call :iniRead Latency CurLatValue "%FST_ConfigDir%" "%FST_ConfigFile%"
+	::call :iniRead Latency CurLatValue "%FST_ConfigDir%" "%FST_ConfigFile%"
+	call :iniRead minimum_latency_in_multiplayer CurLatValue "%FacCfg%" "%ServerConfigFile%"
 ) else (
 	set CurLatValue=-NOT SET OR FOUND-
 )
@@ -1118,7 +1130,8 @@ IF %ChangeLatency%== 1 (
 	echo  Writing config file:
 	echo  %FST_Config%
 	echo -------------------------------------------------------------------------------
-	call :iniWrite Latency %Latency% "%FST_Config%"
+	::call :iniWrite Latency %Latency% "%FST_Config%"
+    call :iniWrite minimum_latency_in_multiplayer %Latency% "%ServerConfig%"
 	
 	IF %ERRORLEVEL%== 1 goto startServer
 )
@@ -1178,9 +1191,6 @@ IF NOT EXIST "%FST_Config%"	copy NUL "%FST_Config%"
 set InstallString=%InstallDir: =?%
 call :iniWrite InstallDir %InstallString% "%FST_Config%"
 call :iniWrite WinOS %WinOS% "%FST_Config%"
-call :iniWrite AutoSaveTimer %AutoSaveTimer% "%FST_Config%"
-call :iniWrite AutoSaveSlots %AutoSaveSlots% "%FST_Config%"
-call :iniWrite Latency %Latency% "%FST_Config%"
 call :iniWrite SaveSelection %SaveSel% "%FST_Config%"
 call :iniWrite SetupComplete 1 "%FST_Config%"
 set FactorioData=%FacData: =?%
@@ -1193,6 +1203,14 @@ call :iniWrite FastStart 0 "%FST_Config%"
 call :iniWrite ExtraParams 0 "%FST_Config%"
 set intvnumber=%vnumber:.=%
 call :iniWrite version %intvnumber% "%FST_Config%"
+
+::newer Factorio puts autosave values and latency inside the server config and can't use command line so write these values to server config
+::call :iniWrite AutoSaveTimer %AutoSaveTimer% "%FST_Config%"
+::call :iniWrite AutoSaveSlots %AutoSaveSlots% "%FST_Config%"
+::call :iniWrite Latency %Latency% "%FST_Config%"
+call :iniWrite minimum_latency_in_multiplayer %Latency% "%ServerConfig%"
+call :iniWrite autosave_interval %AutoSaveTimer% "%ServerConfig%"
+call :iniWrite autosave_slots %AutoSaveSlots% "%ServerConfig%"
 
 set ExtraParams=
 
@@ -1516,7 +1534,7 @@ echo ===========================================================================
 echo                                      ABOUT
 echo -------------------------------------------------------------------------------
 echo  Version: v%vnumber%
-echo  Dated: 23/July/2016
+echo  Dated: 02/April/2017
 echo  Author: Scott Coxhead
 echo.
 echo  Find updates on Github: github.com/Cr4zyy/FactorioServerTool/
@@ -1530,6 +1548,51 @@ choice /c:CGB /n /m ">Open [C]onfig file, go to [G]ithub or go [B]ack to options
 
 IF %ERRORLEVEL%== 1 "%FST_Config%"&& goto aboutThis
 IF %ERRORLEVEL%== 2 start http://github.com/Cr4zyy/FactorioServerTool/&& goto aboutThis
+IF %ERRORLEVEL%== 3 echo goto startServer
+
+:publicConfig
+call :clearEL
+title Factorio Server Tool [ Public Config ]
+cls
+call :ascii
+echo                              Public Server Config
+echo -------------------------------------------------------------------------------
+echo.
+echo  This tool was originally only designed for you to easily host a server that 
+echo  allowed direct connections (entering the IP manually)
+echo.
+echo  Factorio since has included a Server browser and allowed players to show their
+echo  servers in the browser. I will not at this time be including configuration
+echo  options in the FST for these new settings. 
+echo.
+echo  You can however create a file and open it in notepad (or other text editor) to
+echo  configure these settings yourself.#
+echo.
+echo -------------------------------------------------------------------------------
+echo.
+echo  [C]reate public config file, this will prompt overwrite if you have one.
+echo  [O]pen the public config file if you created one already.
+echo  [B]ack to the main options menu
+echo.
+echo -------------------------------------------------------------------------------
+echo.
+echo  You can find the file directory under the option '[8] Factorio Data Dir' 
+echo  on the main option screen. It's called 'server-settings.json'
+echo.
+echo  Note: If the file exists FST will always launch with the parameter to use 
+echo  the server-settings.json file. If you wish to stop being displayed in the
+echo  server browser you can edit your config file or delete the file.
+echo.
+echo  The server-settings.json config will overwrite any autosave values, please
+echo  make sure you config the file correctly.
+echo.
+echo ===============================================================================
+echo                                Select an option:
+echo -------------------------------------------------------------------------------
+choice /c:COB /n /m ">[C]reate config file, [O]pen config file or go [B]ack to options"
+
+IF %ERRORLEVEL%== 1 copy /-y "%FactorioDir%\data\server-settings.example.json" "%FacData%\server-settings.json"&& "%FacData%\server-settings.json"&& goto publicConfig
+IF %ERRORLEVEL%== 2 "%FacData%\server-settings.json"&& goto publicConfig
 IF %ERRORLEVEL%== 3 echo goto startServer
 
 :startServer
@@ -1546,6 +1609,7 @@ IF EXIST mod-list.json (
 	FOR /f "tokens=3" %%l in ('find /v /c "" "%TempFile%"') do set ModCount=%%~nl
 	set /a "ModCount-=1"
 	del "%TempFile%"
+)
 )
 
 ::savefile date
@@ -1601,19 +1665,20 @@ echo     [3] Single player save FILE^(s^)           [8] Open Factorio Data Dir
 echo.
 echo     [4] Modify Auto SAVE TIME ^& SLOTS        [9] Open Factorio Install Dir
 echo.
-echo     [5] Modify LATENCY value
+echo     [5] Modify LATENCY value                 [0] Public server config
 echo.
 echo     [C]reate a new save game                 [A]bout
 echo.
 echo -------------------------------------------------------------------------------
 echo.
-choice /c:123456789CAB /n /d:B /t:1 /m ">Select a choice from above"
+choice /c:1234567890CAB /n /d:B /t:1 /m ">Select a choice from above"
 IF NOT ERRORLEVEL==12 goto :breakout
 )
 
 :breakout
-IF %ERRORLEVEL%== 11 goto aboutThis
-IF %ERRORLEVEL%== 10 goto makeNewSaveFile
+IF %ERRORLEVEL%== 12 goto aboutThis
+IF %ERRORLEVEL%== 10 goto publicConfig
+IF %ERRORLEVEL%== 11 goto makeNewSaveFile
 IF %ERRORLEVEL%== 1 goto executeServer
 IF %ERRORLEVEL%== 2 goto enterSave
 IF %ERRORLEVEL%== 3 goto selectSPSave
@@ -1664,7 +1729,13 @@ echo.
 color 08
 pushd "%FactorioDir%"
 title Factorio Server Tool [ Server Running - CTRL+C to save and quit ]
-start /wait bin\%WinOS%\Factorio.exe --start-server "%ServerSaveFolder%\%SaveFile%" --autosave-interval %AutoSaveTimer% --autosave-slots %AutoSaveSlots% --latency-ms %Latency% -c "%ServerConfig%" %ExtraParams%&&popd&&call :restartScript
+IF EXIST "%FacData%\server-settings.json" (
+    echo Located server-settings.json launching with values from this configuration.
+    echo.
+	start /wait bin\%WinOS%\Factorio.exe --start-server "%ServerSaveFolder%\%SaveFile%" -c "%ServerConfig%" --server-settings "%FacData%\server-settings.json" %ExtraParams%&&popd&&call :restartScript
+) else (
+    start /wait bin\%WinOS%\Factorio.exe --start-server "%ServerSaveFolder%\%SaveFile%" -c "%ServerConfig%" %ExtraParams%&&popd&&call :restartScript
+)
 goto end
 
 :restartScript
@@ -1724,15 +1795,18 @@ call :iniRead FacData Debug004 "%FST_ConfigDir%" "%FST_ConfigFile%"
 call :iniRead FacConfig Debug005 "%FST_ConfigDir%" "%FST_ConfigFile%"
 call :iniRead SetupComplete Debug006 "%FST_ConfigDir%" "%FST_ConfigFile%"
 call :iniRead FastStart Debug007 "%FST_ConfigDir%" "%FST_ConfigFile%"
-call :iniRead AutoSaveTimer Debug008 "%FST_ConfigDir%" "%FST_ConfigFile%"
-call :iniRead AutoSaveSlots Debug009 "%FST_ConfigDir%" "%FST_ConfigFile%"
-call :iniRead Latency Debug010 "%FST_ConfigDir%" "%FST_ConfigFile%"
+::call :iniRead AutoSaveTimer Debug008 "%FST_ConfigDir%" "%FST_ConfigFile%"
+::call :iniRead AutoSaveSlots Debug009 "%FST_ConfigDir%" "%FST_ConfigFile%"
+::call :iniRead Latency Debug010 "%FST_ConfigDir%" "%FST_ConfigFile%"
 call :iniRead SaveSelection Debug011 "%FST_ConfigDir%" "%FST_ConfigFile%"
 call :iniRead ExtraParams Debug012 "%FST_ConfigDir%" "%FST_ConfigFile%"
 echo Reading config-server.ini details...
 call :iniRead read-data Debug013 "%FacCfg%" "%ServerConfigFile%"
 call :iniRead write-data Debug014 "%FacCfg%" "%ServerConfigFile%"
 call :iniRead port Debug015 "%FacCfg%" "%ServerConfigFile%"
+call :iniRead autosave_interval Debug008 "%FacCfg%" "%ServerConfigFile%"
+call :iniRead autosave_slots Debug009 "%FacCfg%" "%ServerConfigFile%"
+call :iniRead minimum_latency_in_multiplayer Debug010 "%FacCfg%" "%ServerConfigFile%"
 echo Reading config.ini details...
 call :iniRead read-data Debug016 "%FacCfg%" "config.ini"
 call :iniRead write-data Debug017 "%FacCfg%" "config.ini"
@@ -1748,9 +1822,9 @@ echo FacData       :: %Debug004% >>"%FactorioCurLog%"
 echo FacConfig     :: %Debug005% >>"%FactorioCurLog%"
 echo SetupComplete :: %Debug006% >>"%FactorioCurLog%"
 echo FastStart     :: %Debug007% >>"%FactorioCurLog%"
-echo AutoSaveTimer :: %Debug008% >>"%FactorioCurLog%"
-echo AutoSaveSlots :: %Debug009% >>"%FactorioCurLog%"
-echo Latency       :: %Debug010% >>"%FactorioCurLog%"
+::echo AutoSaveTimer :: %Debug008% >>"%FactorioCurLog%"
+::echo AutoSaveSlots :: %Debug009% >>"%FactorioCurLog%"
+::echo Latency       :: %Debug010% >>"%FactorioCurLog%"
 echo SaveSelection :: %Debug011% >>"%FactorioCurLog%"
 echo ExtraParams   :: %Debug012% >>"%FactorioCurLog%"
 echo Writing config-server.ini details...
@@ -1758,6 +1832,9 @@ echo ---- config-server.ini ---- >>"%FactorioCurLog%"
 echo read-data     :: %Debug013% >>"%FactorioCurLog%"
 echo write-data    :: %Debug014% >>"%FactorioCurLog%"
 echo port          :: %Debug015% >>"%FactorioCurLog%"
+echo autosave_interval :: %Debug008% >>"%FactorioCurLog%"
+echo autosave_slots :: %Debug009% >>"%FactorioCurLog%"
+echo minimum_latency_in_multiplayer:: %Debug010% >>"%FactorioCurLog%"
 echo Writing config.ini details...
 echo ------- config.ini ------- >>"%FactorioCurLog%"
 echo read-data     :: %Debug016% >>"%FactorioCurLog%"
